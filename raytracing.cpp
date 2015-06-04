@@ -4,6 +4,7 @@
 #endif
 #include "GL/glut.h"
 #include "raytracing.h"
+#include "config.h"
 
 
 //temporary variables
@@ -23,7 +24,7 @@ void init()
 	//PLEASE ADAPT THE LINE BELOW TO THE FULL PATH OF THE dodgeColorTest.obj
 	//model, e.g., "C:/temp/myData/GraphicsIsFun/dodgeColorTest.obj", 
 	//otherwise the application will not load properly
-	MyMesh.loadMesh("C:/Users/Maarten/Dropbox/School Docz/TI1806 - Computer Graphics/Raytracing Project Git/dodgeColorTest.obj", true);
+	MyMesh.loadMesh(OBJ_PATH, true);
 	MyMesh.computeVertexNormals();
 
 	//one first move: initialize the first light source
