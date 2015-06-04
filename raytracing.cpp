@@ -36,7 +36,34 @@ void init()
 //return the color of your pixel.
 Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest)
 {
-	return Vec3Df(dest[0],dest[1],dest[2]);
+	Vec3Df v0, v1, v2;
+	float a, b, t;
+	Vec3Df p, dir = dest - origin;
+	std::vector<Triangle> triangles = MyMesh.triangles;
+
+	for each (Triangle triangle in triangles)
+	{
+		// if(in frustrum) {
+		v0 = MyMesh.vertices[triangle.v[0]].p;
+		v1 = MyMesh.vertices[triangle.v[1]].p;
+		v2 = MyMesh.vertices[triangle.v[2]].p;
+
+		// Matrix to find a, b , t. How??
+
+		// }
+	}
+	// For all triangles in frustrum
+	//   Compute p = origin + t * dir
+	//		Where p = a * triangle.vertices[0] + b * triangle.vertices[1] + (1 - a - b) * triangle.vertices[2]
+	//			Where a = triangle.vertices[1] - triangle.vertices[0]
+	//			And b = triangle.vertices[2] - triangle.vertices[0]
+	//
+	// Take the triangle with the lowest t
+	// Get material for that triangle
+	// Get colour for that material
+	// return colour
+
+	return Vec3Df(dest[0], dest[1], dest[2]);
 }
 
 
