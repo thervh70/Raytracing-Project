@@ -135,20 +135,19 @@ void yourDebugDraw()
 //    while to complete...
 void yourKeyboardFunc(char t, int x, int y, const Vec3Df & rayOrigin, const Vec3Df & rayDestination)
 {
-
-	//here, as an example, I use the ray to fill in the values for my upper global ray variable
-	//I use these variables in the debugDraw function to draw the corresponding ray.
-	//try it: Press a key, move the camera, see the ray that was launched as a line.
-	testRayOrigin=rayOrigin;	
-	testRayDestination=rayDestination;
-	std::cout << "Origin      " << testRayOrigin << std::endl;
-	std::cout << "Destination " << testRayDestination << std::endl;
-	std::cout << "Color       " << performRayTracing(testRayOrigin, testRayDestination) << std::endl;
-	
-	// do here, whatever you want with the keyboard input t.
-	
-	//...
-	
+	switch (t)
+	{
+	case ' ':
+		//here, as an example, I use the ray to fill in the values for my upper global ray variable
+		//I use these variables in the debugDraw function to draw the corresponding ray.
+		//try it: Press a key, move the camera, see the ray that was launched as a line.
+		testRayOrigin = rayOrigin;
+		testRayDestination = rayDestination;
+		std::cout << "Origin      " << testRayOrigin << std::endl;
+		std::cout << "Destination " << testRayDestination << std::endl;
+		std::cout << "Color       " << performRayTracing(testRayOrigin, testRayDestination) << std::endl;
+		break;
+	}
 	
 	std::cout<<t<<" pressed! The mouse was in location "<<x<<","<<y<<"!"<<std::endl;	
 }
