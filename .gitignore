@@ -2,3 +2,4 @@ Debug/vc140.idb
 Debug/Raytraci*
 Debug/*.obj
 result.ppm
+config.h
