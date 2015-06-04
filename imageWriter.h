@@ -91,29 +91,81 @@ class Image
 	int _width;
 	int _height;
 
-	bool writeImage(const char * filename);	
+	bool writeImagePPM(const char * filename);
+	bool writeImageBMP(const char * filename);
 };
 
-bool Image::writeImage(const char * filename)
+bool Image::writeImagePPM(const char * filename)
 {
 	FILE* file;
-    file = fopen(filename, "wb");
+	file = fopen(filename, "wb");
 	if (!file)
 	{
 		printf("dump file problem... file\n");
 		return false;
 	}
 
-	fprintf(file, "P6\n%i %i\n255\n",_width, _height);
+	// Print PPM header
+	fprintf(file, "P6\n%i %i\n255\n", _width, _height);
 
-	
+	// Print raw pixel data
 	std::vector<unsigned char> imageC(_image.size());
-	
-	for (unsigned int i=0; i<_image.size();++i)
-		imageC[i]=(unsigned char)(_image[i]*255.0f);
-	
+
+	for (unsigned int i = 0; i<_image.size();++i)
+		imageC[i] = (unsigned char)(_image[i] * 255.0f);
+
 	int t = fwrite(&(imageC[0]), _width * _height * 3, 1, file);
-	if (t!=1)
+	if (t != 1)
+	{
+		printf("Dump file problem... fwrite\n");
+		return false;
+	}
+
+	fclose(file);
+	return true;
+}
+
+// WARNING: Width of the file must be dividable by 4!!!
+bool Image::writeImageBMP(const char * filename)
+{
+	FILE* file;
+	file = fopen(filename, "wb");
+	if (!file)
+	{
+		printf("dump file problem... file\n");
+		return false;
+	}
+
+	// Print BMP header
+	unsigned char bmpfileheader[14] = { 'B','M', 0,0,0,0, 0,0, 0,0, 54,0,0,0 };
+	unsigned char bmpinfoheader[40] = { 40,0,0,0, 0,0,0,0, 0,0,0,0, 1,0, 24,0 };
+	unsigned char bmppad[3] = { 0,0,0 };
+
+	bmpfileheader[2] = (unsigned char)(_image.size());
+	bmpfileheader[3] = (unsigned char)(_image.size() >> 8);
+	bmpfileheader[4] = (unsigned char)(_image.size() >> 16);
+	bmpfileheader[5] = (unsigned char)(_image.size() >> 24);
+
+	bmpinfoheader[4] = (unsigned char)(_width);
+	bmpinfoheader[5] = (unsigned char)(_width >> 8);
+	bmpinfoheader[6] = (unsigned char)(_width >> 16);
+	bmpinfoheader[7] = (unsigned char)(_width >> 24);
+	bmpinfoheader[8] = (unsigned char)(_height);
+	bmpinfoheader[9] = (unsigned char)(_height >> 8);
+	bmpinfoheader[10] = (unsigned char)(_height >> 16);
+	bmpinfoheader[11] = (unsigned char)(_height >> 24);
+
+	fwrite(bmpfileheader, 1, 14, file);
+	fwrite(bmpinfoheader, 1, 40, file);
+
+	// Print raw pixel data
+	std::vector<unsigned char> imageC(_image.size());
+
+	for (unsigned int i = 0; i<_image.size();++i)
+		imageC[i] = (unsigned char)(_image[i] * 255.0f);
+
+	int t = fwrite(&(imageC[0]), _width * _height * 3, 1, file);
+	if (t != 1)
 	{
 		printf("Dump file problem... fwrite\n");
 		return false;

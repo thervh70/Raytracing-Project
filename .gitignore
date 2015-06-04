@@ -1,5 +1,7 @@
 Debug/vc140.idb
 Debug/Raytraci*
 Debug/*.obj
-result.ppm
+result.*
 config.h
+*.opensdf
+*.sdf

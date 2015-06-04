@@ -253,7 +253,8 @@ void keyboard(unsigned char key, int x, int y)
 				result.setPixel(x,y, RGBValue(rgb[0], rgb[1], rgb[2]));
 			}
 
-		result.writeImage("result.ppm");
+		result.writeImagePPM("result.ppm");
+		result.writeImageBMP("result.bmp");
 		break;
 	}
 	case 27:     // touche ESC
