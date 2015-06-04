@@ -1,7 +1,13 @@
 Debug/vc140.idb
 Debug/Raytraci*
 Debug/*.obj
-result.*
+
+Release/Raytraci*
+Release/*.obj
+
+.vs/*
+
 config.h
+result.*
 *.opensdf
 *.sdf
