@@ -4,6 +4,7 @@
 #include "GL/glut.h"
 #include <stdlib.h>
 #include <math.h>
+#include <ctime>
 #include <assert.h>
 #include "raytracing.h"
 #include "mesh.h"
@@ -213,7 +214,8 @@ void keyboard(unsigned char key, int x, int y)
 	case 'r':
 	{
 		//Pressing r will launch the raytracing.
-		cout<<"Raytracing"<<endl;
+		printf("Raytracing a complete %i x %i image \n", WindowSize_X, WindowSize_Y);
+		clock_t begin = clock(), prevsec = begin;
 				
 
 		//Setup an image with the size of the current image.
@@ -251,10 +253,24 @@ void keyboard(unsigned char key, int x, int y)
 				Vec3Df rgb = performRayTracing(origin, dest);
 				//store the result in an image 
 				result.setPixel(x,y, RGBValue(rgb[0], rgb[1], rgb[2]));
+
+				//print progress once per second
+				if (clock() - prevsec > CLOCKS_PER_SEC) {
+					int currpx = y*WindowSize_Y + x;
+					int s = WindowSize_X*WindowSize_Y;
+					printf("%3d%%\tPixel %8d/%8d\n", 100 * currpx / s, currpx, s);
+					prevsec += CLOCKS_PER_SEC;
+				}
 			}
 
+		clock_t end = clock();
+		double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+		printf("Raytracing comlete in %g seconds, storing result...\n", elapsed_secs);
 		result.writeImagePPM("result.ppm");
+		printf("Stored result in result.ppm");
 		result.writeImageBMP("result.bmp");
+		printf(" and result.bmp\n");
+
 		break;
 	}
 	case 27:     // touche ESC
