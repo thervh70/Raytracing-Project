@@ -62,5 +62,8 @@
     <ClInclude Include="include\GL\glut.h">
       <Filter>Header Files\GL</Filter>
     </ClInclude>
+    <ClInclude Include="config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

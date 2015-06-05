@@ -45,6 +45,7 @@
     <ClCompile Include="raytracing.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="config.h" />
     <ClInclude Include="imageWriter.h" />
     <ClInclude Include="include\GL\freeglut.h" />
     <ClInclude Include="include\GL\freeglut_ext.h" />
