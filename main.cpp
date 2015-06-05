@@ -199,7 +199,7 @@ void produceRay(int x_I, int y_I, Vec3Df * origin, Vec3Df * dest)
 // react to keyboard input
 void keyboard(unsigned char key, int x, int y)
 {
-    printf("key %d pressed at %d,%d\n",key,x,y);
+    printf("key %d '%c' pressed at %d,%d\n", key, key, x, y);
     fflush(stdout);
     switch (key)
     {
