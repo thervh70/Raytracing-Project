@@ -5,6 +5,7 @@
 #include "GL/glut.h"
 #include "raytracing.h"
 #include "config.h"
+#include "Vec3D.h"
 
 
 //temporary variables
@@ -31,23 +32,53 @@ void init()
 	//at least ONE light source has to be in the scene!!!
 	//here, we set it to the current location of the camera
 	MyLightPositions.push_back(MyCameraPosition);
+
+	// FOR TESTING ONLY ~ Mathias
+	/*testRayOrigin = Vec3Df(2.0f, 5.0f, 1.0f);
+	testRayDestination = Vec3Df(8.0f, 7.0f, 4.0f);
+	performRayTracing(testRayOrigin, testRayDestination);*/
 }
 
 //return the color of your pixel.
 Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest)
 {
-	Vec3Df v0, v1, v2;
-	float a, b, t;
-	Vec3Df p, dir = dest - origin;
+	Vec3Df v0, v1, v2, vec1, vec2, vec3, n, point, dir = dest - origin;
+	float t, D;
 	std::vector<Triangle> triangles = MyMesh.triangles;
-
-	for each (Triangle triangle in triangles)
+	Triangle triangle = triangles[0];
+	//for each (Triangle triangle in triangles)
 	{
 		// if(in frustrum) {
+
+		// Vertices of the triangle
 		v0 = MyMesh.vertices[triangle.v[0]].p;
 		v1 = MyMesh.vertices[triangle.v[1]].p;
 		v2 = MyMesh.vertices[triangle.v[2]].p;
 
+		// Vector from v2 to v0
+		vec1 = v0 - v2;
+		// Vector from v2 to v1
+		vec2 = v1 - v2;
+		// Vector from origin to v0
+		vec3 = v0 - origin;
+
+		// Compute normal n
+		n = Vec3Df::crossProduct(vec1, vec2);
+		n.normalize();
+
+		// Compute distance D between origin and plane
+		D = Vec3Df::dotProduct(vec3, n);
+
+		// Compute factor t
+		t = (D - (Vec3Df::dotProduct(origin, n))) / (Vec3Df::dotProduct(dir, n));
+
+		// Compute intersection
+		for (int i = 0; i < 3; ++i) {
+			point[i] = origin[i] + t * dir[i];
+		}
+
+	
+		system("pause");
 		// Matrix to find a, b , t. How??
 
 		// }
@@ -62,6 +93,13 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest)
 	// Get material for that triangle
 	// Get colour for that material
 	// return colour
+	//
+	// OR
+	//
+	// just try this:
+	// f(x,y) = (1 - x)*v1 + (x - y)*v2 + y*v3
+	// 
+
 
 	return Vec3Df(dest[0], dest[1], dest[2]);
 }

@@ -10,6 +10,7 @@
 #include "mesh.h"
 #include "traqueboule.h"
 #include "imageWriter.h"
+#include "Vec3D.h"
 
 
 //This is the main application
@@ -61,7 +62,7 @@ void keyboard(unsigned char key, int x, int y);
  * Main Programme
  */
 int main(int argc, char** argv)
-{
+{	
     glutInit(&argc, argv);
 
     //framebuffer setup
@@ -112,9 +113,11 @@ int main(int argc, char** argv)
     glutMouseFunc(tbMouseFunc);    // trackball
     glutMotionFunc(tbMotionFunc);  // uses mouse
     glutIdleFunc( animate);
-
+	
 
 	init();
+
+	
 
     
 	//main loop for glut... this just runs your application
