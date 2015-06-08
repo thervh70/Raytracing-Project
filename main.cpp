@@ -10,7 +10,6 @@
 #include "mesh.h"
 #include "traqueboule.h"
 #include "imageWriter.h"
-#include "Vec3D.h"
 
 
 //This is the main application

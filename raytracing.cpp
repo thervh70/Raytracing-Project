@@ -6,6 +6,7 @@
 #include "raytracing.h"
 #include "config.h"
 #include "Vec3D.h"
+#include "Matrix33.h"
 
 
 //temporary variables
@@ -32,6 +33,13 @@ void init()
 	//at least ONE light source has to be in the scene!!!
 	//here, we set it to the current location of the camera
 	MyLightPositions.push_back(MyCameraPosition);
+
+	/* FOR TESTING ONLY ~ Maarten
+	Matrix33f m(Vec3Df(3, 4, 9), Vec3Df(5, 12, 8), Vec3Df(9, 3, 1));
+	std::cout << m << " det:" << m.det() << std::endl;
+	std::cout << m[0][2] << " " << m[1][2] << " " << m[2][2] << std::endl;
+	std::cout << "X = " << m.solve(Vec3Df(1, 2, 3)) << std::endl;
+	system("pause");*/
 
 	// FOR TESTING ONLY ~ Mathias
 	/*testRayOrigin = Vec3Df(2.0f, 5.0f, 1.0f);

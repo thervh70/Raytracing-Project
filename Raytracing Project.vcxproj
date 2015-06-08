@@ -52,6 +52,7 @@
     <ClInclude Include="include\GL\freeglut_std.h" />
     <ClInclude Include="include\GL\glut.h" />
     <ClInclude Include="matrix.h" />
+    <ClInclude Include="Matrix33.h" />
     <ClInclude Include="mesh.h" />
     <ClInclude Include="raytracing.h" />
     <ClInclude Include="traqueboule.h" />
