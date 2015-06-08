@@ -78,7 +78,7 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest)
 		}
 
 	
-		system("pause");
+		//system("pause");
 		// Matrix to find a, b , t. How??
 
 		// }
