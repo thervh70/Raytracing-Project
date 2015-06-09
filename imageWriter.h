@@ -73,7 +73,10 @@
 
 class Image
 {
-	public:
+public:
+	Image(void) {
+		setSize(WindowSize_X, WindowSize_Y);
+	}
 	Image(int width, int height)
 	: _width(width)
 	, _height(height)
@@ -85,8 +88,13 @@ class Image
 		_image[3*(_width*j+i)]=rgb[0];
 		_image[3*(_width*j+i)+1]=rgb[1];
 		_image[3*(_width*j+i)+2]=rgb[2];
-		
 	}
+	void setSize(int w, int h) {
+		_width = w;
+		_height = h;
+		_image.resize(3 * w*h);
+	}
+
 	std::vector<float> _image;
 	int _width;
 	int _height;

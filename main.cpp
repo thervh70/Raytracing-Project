@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <ctime>
+#include <thread>
 #include <assert.h>
 #include "raytracing.h"
 #include "mesh.h"
@@ -30,9 +31,46 @@ std::vector<Vec3Df> MyLightPositions;
 //Main mesh 
 Mesh MyMesh; 
 
-unsigned int WindowSize_X = 800;  // resolution X
-unsigned int WindowSize_Y = 800;  // resolution Y
+unsigned int WindowSize_X = 200;  // resolution X
+unsigned int WindowSize_Y = 200;  // resolution Y
 
+
+
+
+class RayTracer {
+public:
+	RayTracer(void) {
+		Image result(WindowSize_X, WindowSize_Y);
+
+		begin = clock();
+		prevsec = begin;
+
+		Vec3Df a, b, c, d, e, f, g, h;
+		produceRay(0, 0, &a, &b);
+		produceRay(0, WindowSize_Y - 1, &c, &d);
+		produceRay(WindowSize_X - 1, 0, &e, &f);
+		produceRay(WindowSize_X - 1, WindowSize_Y - 1, &g, &h);
+		origin00 = a; dest00 = b;
+		origin01 = c; dest01 = d;
+		origin10 = e; dest10 = f;
+		origin11 = g; dest11 = h;
+	};
+	static void produceRay(int x_I, int y_I, Vec3Df * origin, Vec3Df * dest);
+	void threadmethod(unsigned int y);
+	void doDaRayTracingShizz();
+private:
+	clock_t begin, prevsec;
+
+	//Setup an image with the size of the current image.
+	Image result;
+
+	//produce the rays for each pixel, by first computing
+	//the rays for the corners of the frustum.
+	Vec3Df origin00, dest00;
+	Vec3Df origin01, dest01;
+	Vec3Df origin10, dest10;
+	Vec3Df origin11, dest11;
+};
 
 
 /**
@@ -166,28 +204,7 @@ void reshape(int w, int h)
 }
 
 
-//transform the x, y position on the screen into the corresponding 3D world position
-void produceRay(int x_I, int y_I, Vec3Df * origin, Vec3Df * dest)
-{
-		int viewport[4];
-		double modelview[16];
-		double projection[16];
-		glGetDoublev(GL_MODELVIEW_MATRIX, modelview); //recuperer matrices
-		glGetDoublev(GL_PROJECTION_MATRIX, projection); //recuperer matrices
-		glGetIntegerv(GL_VIEWPORT, viewport);//viewport
-		int y_new = viewport[3] - y_I;
 
-		double x, y, z;
-		
-		gluUnProject(x_I, y_new, 0, modelview, projection, viewport, &x, &y, &z);
-		origin->p[0]=float(x);
-		origin->p[1]=float(y);
-		origin->p[2]=float(z);
-		gluUnProject(x_I, y_new, 1, modelview, projection, viewport, &x, &y, &z);
-		dest->p[0]=float(x);
-		dest->p[1]=float(y);
-		dest->p[2]=float(z);
-}
 
 
 
@@ -215,62 +232,8 @@ void keyboard(unsigned char key, int x, int y)
 	case 'r':
 	{
 		//Pressing r will launch the raytracing.
-		printf("Raytracing a complete %i x %i image \n", WindowSize_X, WindowSize_Y);
-		clock_t begin = clock(), prevsec = begin;
-				
-
-		//Setup an image with the size of the current image.
-		Image result(WindowSize_X,WindowSize_Y);
-		
-		//produce the rays for each pixel, by first computing
-		//the rays for the corners of the frustum.
-		Vec3Df origin00, dest00;
-		Vec3Df origin01, dest01;
-		Vec3Df origin10, dest10;
-		Vec3Df origin11, dest11;
-		Vec3Df origin, dest;
-
-
-		produceRay(0,0, &origin00, &dest00);
-		produceRay(0,WindowSize_Y-1, &origin01, &dest01);
-		produceRay(WindowSize_X-1,0, &origin10, &dest10);
-		produceRay(WindowSize_X-1,WindowSize_Y-1, &origin11, &dest11);
-
-		
-		for (unsigned int y=0; y<WindowSize_Y;++y)
-			for (unsigned int x=0; x<WindowSize_X;++x)
-			{
-				//produce the rays for each pixel, by interpolating 
-				//the four rays of the frustum corners.
-				float xscale=1.0f-float(x)/(WindowSize_X-1);
-				float yscale=1.0f-float(y)/(WindowSize_Y-1);
-
-				origin=yscale*(xscale*origin00+(1-xscale)*origin10)+
-					(1-yscale)*(xscale*origin01+(1-xscale)*origin11);
-				dest=yscale*(xscale*dest00+(1-xscale)*dest10)+
-					(1-yscale)*(xscale*dest01+(1-xscale)*dest11);
-
-				//launch raytracing for the given ray.
-				Vec3Df rgb = performRayTracing(origin, dest);
-				//store the result in an image 
-				result.setPixel(x,y, RGBValue(rgb[0], rgb[1], rgb[2]));
-
-				//print progress once per second
-				if (clock() - prevsec > CLOCKS_PER_SEC) {
-					int currpx = y*WindowSize_Y + x;
-					int s = WindowSize_X*WindowSize_Y;
-					printf("%3d%%\tPixel %8d/%8d\n", 100 * currpx / s, currpx, s);
-					prevsec += CLOCKS_PER_SEC;
-				}
-			}
-
-		clock_t end = clock();
-		double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
-		printf("Raytracing comlete in %g seconds, storing result...\n", elapsed_secs);
-		result.writeImagePPM("result.ppm");
-		printf("Stored result in result.ppm");
-		result.writeImageBMP("result.bmp");
-		printf(" and result.bmp\n");
+		RayTracer r;
+		r.doDaRayTracingShizz();
 
 		break;
 	}
@@ -281,8 +244,88 @@ void keyboard(unsigned char key, int x, int y)
 	
 	//produce the ray for the current mouse position
 	Vec3Df testRayOrigin, testRayDestination;
-	produceRay(x, y, &testRayOrigin, &testRayDestination);
+	RayTracer::produceRay(x, y, &testRayOrigin, &testRayDestination);
 
 	yourKeyboardFunc(key,x,y, testRayOrigin, testRayDestination);
 }
 
+void RayTracer::doDaRayTracingShizz() {
+	printf("\nRaytracing a complete %i x %i image \n", WindowSize_X, WindowSize_Y);
+	//std::cout << "origin00 " << origin00 << "    dest00 " << dest00 << std::endl;
+
+	unsigned n = std::thread::hardware_concurrency();
+	n = (n == 0 ? 2 : n);
+	n = (n > 8 ? 8 : n);
+	n *= 2; // More efficient than *1, apparently, or at least for me
+	std::thread t[16]; // = 8 * 2
+	printf("There are %d threads, %d are fired at a time \n", n/2, n);
+
+	for (unsigned int y = 0; y < WindowSize_Y; y += n*2) {
+		for (int j = 0; j < n; ++j)
+			t[j] = std::thread(&RayTracer::threadmethod, this, y);
+		
+		for (int j = 0; j < n; ++j)
+			t[j].join();
+		
+		//print progress once per second
+		if (clock() - prevsec > CLOCKS_PER_SEC) {
+			int currpx = y*WindowSize_Y;
+			int s = WindowSize_X*WindowSize_Y;
+			printf("%3d%%\tPixel %8d/%8d\n", 100 * currpx / s, currpx, s);
+			prevsec += CLOCKS_PER_SEC;
+		}
+	}
+
+	clock_t end = clock();
+	double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+	printf("Raytracing comlete in %g seconds, storing result...\n", elapsed_secs);
+	result.writeImagePPM("result.ppm");
+	printf("Stored result in result.ppm");
+	result.writeImageBMP("result.bmp");
+	printf(" and result.bmp\n");
+}
+
+void RayTracer::threadmethod(unsigned int y) {
+	//std::cout << "origin00 " << origin00 << "    dest00 " << dest00 << std::endl;
+	for (unsigned int x = 0; x<WindowSize_X;++x)
+	{
+		Vec3Df origin, dest;
+		//produce the rays for each pixel, by interpolating 
+		//the four rays of the frustum corners.
+		float xscale = 1.0f - float(x) / (WindowSize_X - 1);
+		float yscale = 1.0f - float(y) / (WindowSize_Y - 1);
+
+		origin = yscale*(xscale*origin00 + (1 - xscale)*origin10) +
+			(1 - yscale)*(xscale*origin01 + (1 - xscale)*origin11);
+		dest = yscale*(xscale*dest00 + (1 - xscale)*dest10) +
+			(1 - yscale)*(xscale*dest01 + (1 - xscale)*dest11);
+
+		//launch raytracing for the given ray.
+		Vec3Df rgb = performRayTracing(origin, dest);
+		//store the result in an image 
+		result.setPixel(x, y, RGBValue(rgb[0], rgb[1], rgb[2]));
+	}
+}
+
+//transform the x, y position on the screen into the corresponding 3D world position
+void RayTracer::produceRay(int x_I, int y_I, Vec3Df * origin, Vec3Df * dest)
+{
+	int viewport[4];
+	double modelview[16];
+	double projection[16];
+	glGetDoublev(GL_MODELVIEW_MATRIX, modelview); //recuperer matrices
+	glGetDoublev(GL_PROJECTION_MATRIX, projection); //recuperer matrices
+	glGetIntegerv(GL_VIEWPORT, viewport);//viewport
+	int y_new = viewport[3] - y_I;
+
+	double x, y, z;
+
+	gluUnProject(x_I, y_new, 0, modelview, projection, viewport, &x, &y, &z);
+	origin->p[0] = float(x);
+	origin->p[1] = float(y);
+	origin->p[2] = float(z);
+	gluUnProject(x_I, y_new, 1, modelview, projection, viewport, &x, &y, &z);
+	dest->p[0] = float(x);
+	dest->p[1] = float(y);
+	dest->p[2] = float(z);
+}

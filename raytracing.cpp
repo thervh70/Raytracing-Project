@@ -72,10 +72,14 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest)
 		vec3 = v0 - origin;
 
 		Matrix33f matrix(vec1, vec2, dir);
-		Vec3Df res;
+		Vec3Df res2 = matrix.solve(origin - v2);
 
-		res = matrix.solve(origin - v2);
-		res[2] = -res[2];
+/*		if (&res2 == Matrix33f::getBadVec()) {
+			continue;
+		}*/
+
+		Vec3Df res(res2[0], res2[1], -res2[2]); // res[2] = -res[2].
+		// This is done in this way because you can't modify vector entries in a thread apparently
 
 		//Check if hit
 		//res = [a, b, t]
