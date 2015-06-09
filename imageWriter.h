@@ -150,10 +150,10 @@ bool Image::writeImageBMP(const char * filename)
 	bmpinfoheader[5] = (unsigned char)(_width >> 8);
 	bmpinfoheader[6] = (unsigned char)(_width >> 16);
 	bmpinfoheader[7] = (unsigned char)(_width >> 24);
-	bmpinfoheader[8] = (unsigned char)(_height);
-	bmpinfoheader[9] = (unsigned char)(_height >> 8);
-	bmpinfoheader[10] = (unsigned char)(_height >> 16);
-	bmpinfoheader[11] = (unsigned char)(_height >> 24);
+	bmpinfoheader[8] = (unsigned char)(-_height);			// Minus height, because standard BMP renders bottom-to-top
+	bmpinfoheader[9] = (unsigned char)((-_height) >> 8);
+	bmpinfoheader[10] = (unsigned char)((-_height) >> 16);
+	bmpinfoheader[11] = (unsigned char)((-_height) >> 24);
 
 	fwrite(bmpfileheader, 1, 14, file);
 	fwrite(bmpinfoheader, 1, 40, file);
@@ -161,8 +161,12 @@ bool Image::writeImageBMP(const char * filename)
 	// Print raw pixel data
 	std::vector<unsigned char> imageC(_image.size());
 
-	for (unsigned int i = 0; i<_image.size();++i)
-		imageC[i] = (unsigned char)(_image[i] * 255.0f);
+	// RGB are flipped to BGR
+	for (unsigned int i = 0; i < _image.size(); i += 3) {
+		imageC[i] = (unsigned char)(_image[i+2] * 255.0f);
+		imageC[i+1] = (unsigned char)(_image[i+1] * 255.0f);
+		imageC[i+2] = (unsigned char)(_image[i] * 255.0f);
+	}
 
 	int t = fwrite(&(imageC[0]), _width * _height * 3, 1, file);
 	if (t != 1)
