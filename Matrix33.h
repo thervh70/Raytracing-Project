@@ -130,7 +130,7 @@ public:
 	inline Vec3D<T> solve(Vec3D<T> constant) {
 		T det = (*this).det();
 		if (det == 0) {
-			return *getBadVec();
+			return getBadVec();
 		}
 		return Vec3D<T>(
 			Matrix33<T>(constant, p[1], p[2]).det() / det,

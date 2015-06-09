@@ -71,28 +71,10 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest)
 		// Vector from origin to v0
 		vec3 = v0 - origin;
 
-/*		// Compute normal n
-		n = Vec3Df::crossProduct(vec1, vec2);
-		n.normalize();
-
-		// Compute distance D between origin and plane
-		D = Vec3Df::dotProduct(vec3, n);
-
-		// Compute factor t
-		t = (D - (Vec3Df::dotProduct(origin, n))) / (Vec3Df::dotProduct(dir, n));
-
-		// Compute intersection
-		for (int i = 0; i < 3; ++i) {
-			point[i] = origin[i] + t * dir[i];
-		}*/
-
 		Matrix33f matrix(vec1, vec2, dir);
 		Vec3Df res;
 
 		res = matrix.solve(origin - v2);
-/*		if (&res == Matrix33f::getBadVec()) {
-			continue;
-		}*/
 		res[2] = -res[2];
 
 		//Check if hit
@@ -108,22 +90,8 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest)
 		
 		resCol = material.Kd();
 	}
-	// For all triangles in frustrum
-	//   Compute p = origin + t * dir
-	//		Where p = a * triangle.vertices[0] + b * triangle.vertices[1] + (1 - a - b) * triangle.vertices[2]
-	//			Where a = triangle.vertices[1] - triangle.vertices[0]
-	//			And b = triangle.vertices[2] - triangle.vertices[0]
-	//
-	// Take the triangle with the lowest t
-	// Get material for that triangle
-	// Get colour for that material
-	// return colour
-	//
-	// OR
-	//
-	// just try this:
+
 	// f(x,y) = (1 - x)*v1 + (x - y)*v2 + y*v3
-	// 
 
 	return resCol;
 }
