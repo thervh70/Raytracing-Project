@@ -129,8 +129,9 @@ public:
 	// matrix.solve(vector) solves: matrix * X = vector
 	inline Vec3D<T> solve(Vec3D<T> constant) {
 		T det = (*this).det();
-		if (det == 0)
-			return NULL;
+		if (det == 0) {
+			return *getBadVec();
+		}
 		return Vec3D<T>(
 			Matrix33<T>(constant, p[1], p[2]).det() / det,
 			Matrix33<T>(p[0], constant, p[2]).det() / det,
@@ -147,8 +148,16 @@ public:
 		return p;
 	}
 
+	static Vec3D<T>* getBadVec() {
+		return &Vec3D<T>();
+	}
+
 
 	Vec3D<T> p[3];
+
+private:
+
+//	static Vec3Df badVec = Vec3Df(0.0f, 0.0f, 0.0f);
 };
 
 template <class T> inline Matrix33<T> swap(Matrix33<T> & P, Matrix33<T> & Q) {

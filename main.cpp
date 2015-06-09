@@ -35,7 +35,6 @@ unsigned int WindowSize_Y = 800;  // resolution Y
 
 
 
-
 /**
  * Main function, which is drawing an image (frame) on the screen
 */

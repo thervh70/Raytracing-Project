@@ -87,7 +87,12 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest)
 		}*/
 
 		Matrix33f matrix(vec1, vec2, dir);
-		Vec3Df res = matrix.solve(origin - v2);
+		Vec3Df res;
+
+		res = matrix.solve(origin - v2);
+/*		if (&res == Matrix33f::getBadVec()) {
+			continue;
+		}*/
 		res[2] = -res[2];
 
 		//Check if hit
