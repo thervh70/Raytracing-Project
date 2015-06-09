@@ -148,8 +148,8 @@ public:
 		return p;
 	}
 
-	static Vec3D<T>* getBadVec() {
-		return &Vec3D<T>();
+	static Vec3D<T> getBadVec() {
+		return Vec3D<T>();
 	}
 
 
