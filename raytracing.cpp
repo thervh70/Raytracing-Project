@@ -37,7 +37,6 @@ void init()
 	/* FOR TESTING ONLY ~ Maarten
 	Matrix33f m(Vec3Df(3, 4, 9), Vec3Df(5, 12, 8), Vec3Df(9, 3, 1));
 	std::cout << m << " det:" << m.det() << std::endl;
-	std::cout << m[0][2] << " " << m[1][2] << " " << m[2][2] << std::endl;
 	std::cout << "X = " << m.solve(Vec3Df(1, 2, 3)) << std::endl;
 	system("pause");*/
 
