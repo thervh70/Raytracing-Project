@@ -50,12 +50,14 @@ void init()
 //return the color of your pixel.
 Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest)
 {
-	Vec3Df v0, v1, v2, vec1, vec2, vec3, n, point, dir = dest - origin;
-	float t, D;
+	Vec3Df v0, v1, v2, vec1, vec2, vec3, n, point, resCol, dir = dest - origin;
+	float t, D, minT = 99999999999;
 	std::vector<Triangle> triangles = MyMesh.triangles;
-	Triangle triangle = triangles[0];
-	//for each (Triangle triangle in triangles)
+	Triangle triangle;
+	Material material;
+	for (int i = 0; i < triangles.size(); ++i)
 	{
+		triangle = triangles[i];
 		// if(in frustrum) {
 
 		// Vertices of the triangle
@@ -70,7 +72,7 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest)
 		// Vector from origin to v0
 		vec3 = v0 - origin;
 
-		// Compute normal n
+/*		// Compute normal n
 		n = Vec3Df::crossProduct(vec1, vec2);
 		n.normalize();
 
@@ -83,13 +85,24 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest)
 		// Compute intersection
 		for (int i = 0; i < 3; ++i) {
 			point[i] = origin[i] + t * dir[i];
-		}
+		}*/
 
-	
-		//system("pause");
-		// Matrix to find a, b , t. How??
+		Matrix33f matrix(vec1, vec2, dir);
+		Vec3Df res = matrix.solve(origin - v2);
+		res[2] = -res[2];
 
-		// }
+		//Check if hit
+		//res = [a, b, t]
+		if (res[0] < 0 || res[1] < 0 || res[0] + res[1] > 1 || res[2] < 0)
+			continue;
+
+		if (res[2] > minT)
+			continue;
+
+		minT = res[2];
+		material = MyMesh.materials[MyMesh.triangleMaterials[i]];
+		
+		resCol = material.Kd();
 	}
 	// For all triangles in frustrum
 	//   Compute p = origin + t * dir
@@ -108,8 +121,7 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest)
 	// f(x,y) = (1 - x)*v1 + (x - y)*v2 + y*v3
 	// 
 
-
-	return Vec3Df(dest[0], dest[1], dest[2]);
+	return resCol;
 }
 
 
