@@ -34,4 +34,12 @@ void yourDebugDraw();
 //want keyboard interaction? Here it is...
 void yourKeyboardFunc(char t, int x, int y, const Vec3Df & rayOrigin, const Vec3Df & rayDestination);
 
+struct Hitpair {
+	bool bHit;
+	Vec3Df res;
+};
+
+inline Hitpair checkHit(const Triangle & triangle, const Vec3Df & origin, const Vec3Df & dest, float minT);
+inline Vec3Df calculateIntersectionPoint(const Vec3Df & rayOrigin, const Vec3Df & rayDest);
+
 #endif

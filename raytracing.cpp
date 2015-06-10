@@ -49,47 +49,20 @@ void init()
 //return the color of your pixel.
 Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest)
 {
-	Vec3Df v0, v1, v2, vec1, vec2, vec3, n, point, resCol, dir = dest - origin;
-	float t, D, minT = 99999999999;
+	Vec3Df resCol;
+	float t, D, minT = std::numeric_limits<float>::max();
 	std::vector<Triangle> triangles = MyMesh.triangles;
-	Triangle triangle;
 	Material material;
+
 	for (int i = 0; i < triangles.size(); ++i)
 	{
-		triangle = triangles[i];
-		// if(in frustrum) {
+		Hitpair hitpair = checkHit(triangles[i], origin, dest, minT);
 
-		// Vertices of the triangle
-		v0 = MyMesh.vertices[triangle.v[0]].p;
-		v1 = MyMesh.vertices[triangle.v[1]].p;
-		v2 = MyMesh.vertices[triangle.v[2]].p;
-
-		// Vector from v2 to v0
-		vec1 = v0 - v2;
-		// Vector from v2 to v1
-		vec2 = v1 - v2;
-		// Vector from origin to v0
-		vec3 = v0 - origin;
-
-		Matrix33f matrix(vec1, vec2, dir);
-		Vec3Df res2 = matrix.solve(origin - v2);
-
-/*		if (&res2 == Matrix33f::getBadVec()) {
-			continue;
-		}*/
-
-		Vec3Df res(res2[0], res2[1], -res2[2]); // res[2] = -res[2].
-		// This is done in this way because you can't modify vector entries in a thread apparently
-
-		//Check if hit
-		//res = [a, b, t]
-		if (res[0] < 0 || res[1] < 0 || res[0] + res[1] > 1 || res[2] < 0)
+		if (!hitpair.bHit)
 			continue;
 
-		if (res[2] > minT)
-			continue;
+		minT = hitpair.res[2];
 
-		minT = res[2];
 		material = MyMesh.materials[MyMesh.triangleMaterials[i]];
 		
 		resCol = material.Kd();
@@ -176,10 +149,102 @@ void yourKeyboardFunc(char t, int x, int y, const Vec3Df & rayOrigin, const Vec3
 		//I use these variables in the debugDraw function to draw the corresponding ray.
 		//try it: Press a key, move the camera, see the ray that was launched as a line.
 		testRayOrigin = rayOrigin;
-		testRayDestination = rayDestination;
+		//testRayDestination = rayDestination;
+
+		// calculate the coördinates where the ray will hit an object
+		// and use those coördinates as ray destination
+		try
+		{
+			// !!! CURRENTLY ONLY WORKS FOR THE FRONT OF THE SQUARE (WIP) !!!
+			testRayDestination = calculateIntersectionPoint(rayOrigin, rayDestination);
+		}
+		catch (int e)
+		{
+			if (e == 1)
+			{
+				std::cout << "exception (1) : ray doesn't intersect with any objects" << std::endl;
+				testRayDestination = rayDestination;
+			}
+		}
+		
+/*		if (&intersectionPoint == nullptr)
+			testRayDestination = rayDestination;
+		else
+			testRayDestination = intersectionPoint;*/
+
 		std::cout << "Origin      " << testRayOrigin << std::endl;
 		std::cout << "Destination " << testRayDestination << std::endl;
 		std::cout << "Color       " << performRayTracing(testRayOrigin, testRayDestination) << std::endl;
 		break;
 	}
+}
+
+// throws exception 1 if no intersection point was found
+inline Vec3Df calculateIntersectionPoint(const Vec3Df & rayOrigin, const Vec3Df & rayDest)
+{
+	// Get the triangles
+	std::vector<Triangle> triangles = MyMesh.triangles;
+	Triangle *closestTriangle = nullptr;
+	float minT = std::numeric_limits<float>::max();
+	Hitpair hitpair;
+
+	// Check for each triangle if the ray hits it,
+	// after this loop, the closest triangle will be stored in closestTriangle
+	for (int i = 0; i < triangles.size(); ++i)
+	{
+		hitpair = checkHit(triangles[i], rayOrigin, rayDest, minT);
+		if (!hitpair.bHit)
+			continue;
+		minT = hitpair.res[2];
+		closestTriangle = &triangles[i];
+	}
+
+	// If no intersection, throw an exception
+	if (closestTriangle == nullptr)
+	{
+		throw 1;
+	}
+
+	// Return the intersecton point with the triangle (NOTE: DOESN"T WORK YET)
+	return rayOrigin + hitpair.res[2] * (rayDest - rayOrigin);
+}
+
+// check if the triangle is hit by the ray from origin to dest and closer to the origin than minT
+inline Hitpair checkHit(const Triangle & triangle, const Vec3Df & origin, const Vec3Df & dest, float minT)
+{
+	// local variables
+	Vec3Df v0, v1, v2, vec1, vec2, vec3, dir = dest - origin;
+	Hitpair result;
+
+	// Vertices of the triangle
+	v0 = MyMesh.vertices[triangle.v[0]].p;
+	v1 = MyMesh.vertices[triangle.v[1]].p;
+	v2 = MyMesh.vertices[triangle.v[2]].p;
+
+	// Vector from v2 to v0
+	vec1 = v0 - v2;
+	// Vector from v2 to v1
+	vec2 = v1 - v2;
+	// Vector from origin to v0
+	vec3 = v0 - origin;
+
+	Matrix33f matrix(vec1, vec2, dir);
+	Vec3Df res2 = matrix.solve(origin - v2);
+
+	/*		if (&res2 == Matrix33f::getBadVec()) {
+	continue;
+	}*/
+
+	Vec3Df res(res2[0], res2[1], -res2[2]); // res[2] = -res[2].
+											// This is done in this way because you can't modify vector entries in a thread apparently
+
+	//Check if hit
+	//res = [a, b, t]
+	if (res[0] < 0 || res[1] < 0 || res[0] + res[1] > 1 || res[2] < 0 || res[2] > minT)
+		result.bHit = false;
+	else
+		result.bHit = true;
+	
+	result.res = res;
+	return result;
 }
