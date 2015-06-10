@@ -257,13 +257,12 @@ void RayTracer::doDaRayTracingShizz() {
 	n = (n == 0 ? 2 : n);
 	n = (n > 8 ? 8 : n);
 	n *= 2; // More efficient than *1, apparently, or at least for me
-	n = 1; // Remove this if you want parallel performance
 	std::thread t[16]; // = 8 * 2
 	printf("There are %d threads, %d are fired at a time \n", n/2, n);
 
 	for (unsigned int y = 0; y < WindowSize_Y; y += n) {
 		for (int j = 0; j < n; ++j)
-			t[j] = std::thread(&RayTracer::threadmethod, this, y);
+			t[j] = std::thread(&RayTracer::threadmethod, this, y + j);
 		
 		for (int j = 0; j < n; ++j)
 			t[j].join();
