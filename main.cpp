@@ -7,6 +7,7 @@
 #include <ctime>
 #include <thread>
 #include <assert.h>
+#include "config.h"
 #include "raytracing.h"
 #include "mesh.h"
 #include "traqueboule.h"
@@ -30,9 +31,6 @@ std::vector<Vec3Df> MyLightPositions;
 
 //Main mesh 
 Mesh MyMesh; 
-
-unsigned int WindowSize_X = 200;  // resolution X
-unsigned int WindowSize_Y = 200;  // resolution Y
 
 
 
@@ -105,7 +103,7 @@ int main(int argc, char** argv)
     glutInitDisplayMode( GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH );
 
     // positioning and size of window
-    glutInitWindowPosition(200, 100);
+    glutInitWindowPosition(WindowPos_X, WindowPos_Y);
     glutInitWindowSize(WindowSize_X,WindowSize_Y);
     glutCreateWindow(argv[0]);	
 

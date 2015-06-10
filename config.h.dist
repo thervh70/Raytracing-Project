@@ -11,4 +11,10 @@
 /* The path to the OBJ file */
 #define OBJ_PATH "D:/Software Projects/OpenGL/Raytracing-Project/dodgeColorTest.obj"
 
+/* Window parameters */
+const unsigned WindowSize_X = 800;  // resolution X
+const unsigned WindowSize_Y = 800;  // resolution Y
+const unsigned WindowPos_X = 400;  // position X
+const unsigned WindowPos_Y = 200;  // position Y
+
 #endif
