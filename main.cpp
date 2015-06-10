@@ -43,19 +43,14 @@ public:
 		begin = clock();
 		prevsec = begin;
 
-		Vec3Df a, b, c, d, e, f, g, h;
-		produceRay(0, 0, &a, &b);
-		produceRay(0, WindowSize_Y - 1, &c, &d);
-		produceRay(WindowSize_X - 1, 0, &e, &f);
-		produceRay(WindowSize_X - 1, WindowSize_Y - 1, &g, &h);
-		origin00 = a; dest00 = b;
-		origin01 = c; dest01 = d;
-		origin10 = e; dest10 = f;
-		origin11 = g; dest11 = h;
+		produceRay(0, 0, &origin00, &dest00);
+		produceRay(0, WindowSize_Y - 1, &origin01, &dest01);
+		produceRay(WindowSize_X - 1, 0, &origin10, &dest10);
+		produceRay(WindowSize_X - 1, WindowSize_Y - 1, &origin11, &dest11);
 	};
 	static void produceRay(int x_I, int y_I, Vec3Df * origin, Vec3Df * dest);
 	void threadmethod(unsigned int y);
-	void doDaRayTracingShizz();
+	double doDaRayTracingShizz();
 private:
 	clock_t begin, prevsec;
 
@@ -232,7 +227,6 @@ void keyboard(unsigned char key, int x, int y)
 		//Pressing r will launch the raytracing.
 		RayTracer r;
 		r.doDaRayTracingShizz();
-
 		break;
 	}
 	case 27:     // touche ESC
@@ -247,9 +241,9 @@ void keyboard(unsigned char key, int x, int y)
 	yourKeyboardFunc(key,x,y, testRayOrigin, testRayDestination);
 }
 
-void RayTracer::doDaRayTracingShizz() {
+/* @return amount of seconds the raytracing took */
+double RayTracer::doDaRayTracingShizz() {
 	printf("\nRaytracing a complete %i x %i image \n", WindowSize_X, WindowSize_Y);
-	//std::cout << "origin00 " << origin00 << "    dest00 " << dest00 << std::endl;
 
 	unsigned n = std::thread::hardware_concurrency();
 	n = (n == 0 ? 2 : n);
@@ -281,11 +275,11 @@ void RayTracer::doDaRayTracingShizz() {
 	printf("Stored result in result.ppm");
 	result.writeImageBMP("result.bmp");
 	printf(" and result.bmp\n");
+	return elapsed_secs;
 }
 
 void RayTracer::threadmethod(unsigned int y) {
-	//std::cout << "origin00 " << origin00 << "    dest00 " << dest00 << std::endl;
-	for (unsigned int x = 0; x<WindowSize_X;++x)
+	for (unsigned int x = 0; x<WindowSize_X; ++x)
 	{
 		Vec3Df origin, dest;
 		//produce the rays for each pixel, by interpolating 
