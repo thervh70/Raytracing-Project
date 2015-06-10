@@ -211,6 +211,7 @@ void reshape(int w, int h)
 // react to keyboard input
 void keyboard(unsigned char key, int x, int y)
 {
+	double times = 0;
     printf("key %d '%c' pressed at %d,%d\n", key, key, x, y);
     fflush(stdout);
     switch (key)
@@ -229,6 +230,13 @@ void keyboard(unsigned char key, int x, int y)
 		r.doDaRayTracingShizz();
 		break;
 	}
+	case 'R':
+		for (int i = 0; i < 5; ++i) {
+			RayTracer r;
+			times += r.doDaRayTracingShizz() / 5;
+		}
+		printf("\nAverage RayTracing time: %f", times);
+		break;
 	case 27:     // touche ESC
         exit(0);
     }
