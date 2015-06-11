@@ -40,6 +40,26 @@ struct Hitpair {
 	Vec3Df hitPoint;
 };
 
+struct KDtreeCube {
+	float xStart, xEnd, yStart, yEnd, zStart, zEnd;
+	std::vector<Triangle> triangles;
+	
+	// constructor
+	KDtreeCube(std::vector<Triangle> tri, float xS, float xE, float yS, float yE, float zS, float zE)
+	{
+		triangles = tri;
+		xStart = xS;
+		xEnd = xE;
+		yStart = yS;
+		yEnd = yE;
+		zStart = zS;
+		zEnd = zE;
+	}
+
+	// basic constructor
+	KDtreeCube() {};
+};
+
 inline Hitpair checkHit(const Triangle & triangle, const Vec3Df & origin, const Vec3Df & dest, float minT);
 inline Vec3Df calculateIntersectionPoint(const Vec3Df & rayOrigin, const Vec3Df & rayDest);
 
