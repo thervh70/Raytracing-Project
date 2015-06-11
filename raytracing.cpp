@@ -69,24 +69,18 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 		material = MyMesh.materials[MyMesh.triangleMaterials[i]];
 	}
 
-	resCol = material.Kd();
-
-
 	/**
 	Work In progress, Youri Arkesteijn, trying to get this to work on the same way as it does in scene previeuw with spacebar.
 	**/
 	Vec3Df intersectionPoint = origin + minT * (dest - origin);
-	resCol = Vec3Df(0.0f, 0.0f, 0.0f);
+	resCol = material.Kd()*0.04f;
 	float angle;
 
 	for (Vec3Df v : MyLightPositions) {
 		angle = Vec3Df::cosAngle(intersectionPoint - v, intersectionPoint - origin);
-
-/*		if(angle != -2147483648 && angle != 0 && angle < 2)
-			std::cout << angle << std::endl;*/
 			
 		if (angle > 0) {
-			resCol = material.Kd()*angle/ MyLightPositions.size();
+			resCol += material.Kd()*angle/MyLightPositions.size();
 		}
 	}
 
