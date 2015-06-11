@@ -67,9 +67,17 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest)
 	}
 
 	Vec3Df intersectionPoint = origin + minT * (dest - origin);
-	resCol = Vec3Df(0, 0, 0);
+	resCol = Vec3Df(0.0f, 0.0f, 0.0f);
+	int angle;
 	for (Vec3Df v : MyLightPositions) {
-		resCol += material.Kd()*Vec3Df::cosAngle(v - intersectionPoint, dest - origin);
+		angle = Vec3Df::cosAngle(intersectionPoint-v, dest - origin);
+
+		if(angle != -2147483648 && angle != 0)
+			std::cout << angle << std::endl;
+
+		if (angle > 0) {
+			resCol = material.Kd()*angle/ MyLightPositions.size();
+		}
 	}
 
 	// f(x,y) = (1 - x)*v1 + (x - y)*v2 + y*v3
