@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <assert.h>
+#include <fstream>
 
 //Image class 
 //This class can be used to write your final result to an image. 
@@ -101,6 +102,7 @@ public:
 
 	bool writeImagePPM(const char * filename);
 	bool writeImageBMP(const char * filename);
+	bool writeImageBMP(const char * filename, int x, int y, int w, int h);
 };
 
 bool Image::writeImagePPM(const char * filename)
@@ -133,7 +135,6 @@ bool Image::writeImagePPM(const char * filename)
 	return true;
 }
 
-// WARNING: Width of the file must be dividable by 4!!!
 bool Image::writeImageBMP(const char * filename)
 {
 	FILE* file;
@@ -167,13 +168,20 @@ bool Image::writeImageBMP(const char * filename)
 	fwrite(bmpinfoheader, 1, 40, file);
 
 	// Print raw pixel data
-	std::vector<unsigned char> imageC(_image.size());
+	int rowsize = floor((24 * _width + 31) / 32) * 4;
+	std::vector<unsigned char> imageC(rowsize * _height);
 
-	// RGB are flipped to BGR
-	for (unsigned int i = 0; i < _image.size(); i += 3) {
-		imageC[i] = (unsigned char)(_image[i+2] * 255.0f);
-		imageC[i+1] = (unsigned char)(_image[i+1] * 255.0f);
-		imageC[i+2] = (unsigned char)(_image[i] * 255.0f);
+	for (unsigned int y = 0; y < _height; ++y) {
+		unsigned int i = 0;
+		for (; i < _width * 3; i += 3) {
+			// RGB are flipped to BGR
+			imageC[y*rowsize + i] = (unsigned char)(_image[y*_width*3 + i + 2] * 255.0f);
+			imageC[y*rowsize + i + 1] = (unsigned char)(_image[y*_width*3 + i + 1] * 255.0f);
+			imageC[y*rowsize + i + 2] = (unsigned char)(_image[y*_width*3 + i] * 255.0f);
+		}
+		for (; i < rowsize; ++i) {
+			imageC[y*rowsize + i] = (unsigned char)1;
+		}
 	}
 
 	int t = fwrite(&(imageC[0]), _width * _height * 3, 1, file);
@@ -184,6 +192,24 @@ bool Image::writeImageBMP(const char * filename)
 	}
 
 	fclose(file);
+	return true;
+}
+
+bool Image::writeImageBMP(const char* filename, int x, int y, int w, int h) {
+	std::fstream s(filename, std::fstream::in | std::fstream::out | std::fstream::binary);
+	for (int Y = y; Y < y + h; ++Y) {
+		std::vector<char> imageC(w * 3);
+		for (int j = x; j < x + w; ++j) {
+			// RGB are flipped to BGR
+			imageC[(j - x) * 3] = (char)(_image[Y*_width * 3 + j*3 + 2] * 255.0f);
+			imageC[(j - x) * 3 + 1] = (char)(_image[Y*_width * 3 + j*3 + 1] * 255.0f);
+			imageC[(j - x) * 3 + 2] = (char)(_image[Y*_width * 3 + j*3] * 255.0f);
+		}
+		const std::vector<char> imageConst(imageC);
+		s.seekp(54 + (Y*w + x) * 3, std::ios_base::beg);
+		s.write(&(imageConst[0]), w * 3);
+	}
+	s.close();
 	return true;
 }
 

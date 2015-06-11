@@ -26,7 +26,7 @@ void produceRay(int x_I, int y_I, Vec3Df & origin, Vec3Df & dest);
 
 
 //your main function to rewrite
-Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest);
+Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int i);
 
 //a function to debug --- you can draw in OpenGL here
 void yourDebugDraw();
@@ -37,6 +37,7 @@ void yourKeyboardFunc(char t, int x, int y, const Vec3Df & rayOrigin, const Vec3
 struct Hitpair {
 	bool bHit;
 	Vec3Df res;
+	Vec3Df hitPoint;
 };
 
 inline Hitpair checkHit(const Triangle & triangle, const Vec3Df & origin, const Vec3Df & dest, float minT);
