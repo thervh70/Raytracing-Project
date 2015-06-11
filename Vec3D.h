@@ -68,9 +68,16 @@ public:
         init (v[0], v[1], v[2]);
     }
     inline Vec3D (T* pp) {
-        p[0] = pp[0];
-        p[1] = pp[1];
-        p[2] = pp[2];
+		if (pp != = nullptr) {
+			p[0] = pp[0];
+			p[1] = pp[1];
+			p[2] = pp[2];
+		}
+		else {
+			p[0] = 0;
+			p[1] = 0;
+			p[2] = 0;
+		}
     };
     // ---------
     // Operators
