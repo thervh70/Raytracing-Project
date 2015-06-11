@@ -189,9 +189,14 @@ public:
         result[2] = a[0] * b[1] - a[1] * b[0];
         return(result);
     }
-    static inline T dotProduct(const Vec3D & a, const Vec3D & b) {
-        return (a[0] * b[0] + a[1] * b[1] + a[2] * b[2]);
-    }
+	static inline T dotProduct(const Vec3D & a, const Vec3D & b) {
+		return (a[0] * b[0] + a[1] * b[1] + a[2] * b[2]);
+	}
+
+	static inline T cosAngle(const Vec3D & a, const Vec3D & b) {
+		return (a[0] * b[0] + a[1] * b[1] + a[2] * b[2])/(a.getLength()*b.getLength());
+	}
+
     static inline T squaredDistance (const Vec3D &v1, const Vec3D &v2) {
         Vec3D tmp = v1 - v2;
         return (tmp.getSquaredLength());
