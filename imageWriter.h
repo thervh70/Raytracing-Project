@@ -133,7 +133,6 @@ bool Image::writeImagePPM(const char * filename)
 	return true;
 }
 
-// WARNING: Width of the file must be dividable by 4!!!
 bool Image::writeImageBMP(const char * filename)
 {
 	FILE* file;
@@ -167,13 +166,20 @@ bool Image::writeImageBMP(const char * filename)
 	fwrite(bmpinfoheader, 1, 40, file);
 
 	// Print raw pixel data
-	std::vector<unsigned char> imageC(_image.size());
+	int rowsize = floor((24 * _width + 31) / 32) * 4;
+	std::vector<unsigned char> imageC(rowsize * _height);
 
-	// RGB are flipped to BGR
-	for (unsigned int i = 0; i < _image.size(); i += 3) {
-		imageC[i] = (unsigned char)(_image[i+2] * 255.0f);
-		imageC[i+1] = (unsigned char)(_image[i+1] * 255.0f);
-		imageC[i+2] = (unsigned char)(_image[i] * 255.0f);
+	for (unsigned int y = 0; y < _height; ++y) {
+		unsigned int i = 0;
+		for (; i < _width * 3; i += 3) {
+			// RGB are flipped to BGR
+			imageC[y*rowsize + i] = (unsigned char)(_image[y*_width*3 + i + 2] * 255.0f);
+			imageC[y*rowsize + i + 1] = (unsigned char)(_image[y*_width*3 + i + 1] * 255.0f);
+			imageC[y*rowsize + i + 2] = (unsigned char)(_image[y*_width*3 + i] * 255.0f);
+		}
+		for (; i < rowsize; ++i) {
+			imageC[y*rowsize + i] = (unsigned char)1;
+		}
 	}
 
 	int t = fwrite(&(imageC[0]), _width * _height * 3, 1, file);
