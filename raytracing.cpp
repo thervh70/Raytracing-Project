@@ -47,16 +47,17 @@ void init()
 }
 
 //return the color of your pixel.
-Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest)
+Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 {
-	Vec3Df resCol;
+	Vec3Df resCol, point, n, dir = dest - origin;
+	Hitpair hitpair;
 	float t, D, minT = std::numeric_limits<float>::max();
 	std::vector<Triangle> triangles = MyMesh.triangles;
 	Material material;
 
 	for (int i = 0; i < triangles.size(); ++i)
 	{
-		Hitpair hitpair = checkHit(triangles[i], origin, dest, minT);
+		hitpair = checkHit(triangles[i], origin, dest, minT);
 
 		if (!hitpair.bHit)
 			continue;
@@ -71,6 +72,17 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest)
 	for (Vec3Df v : MyLightPositions) {
 		resCol += material.Kd()*Vec3Df::cosAngle(v - intersectionPoint, dest - origin);
 	}
+//WIP
+/*	n = 0; // Interpolate over vertices
+	point = dir - 2 * Vec3Df::dotProduct(n, dir) * n;
+	if (material.has_illum()) {
+		int illum = material.illum();
+		if (illum == 3) {
+
+			performRayTracing(hitpair.hitPoint, point, k++);
+		}
+	}*/
+
 
 	// f(x,y) = (1 - x)*v1 + (x - y)*v2 + y*v3
 
@@ -160,7 +172,7 @@ void yourKeyboardFunc(char t, int x, int y, const Vec3Df & rayOrigin, const Vec3
 
 		std::cout << "Origin      " << testRayOrigin << std::endl;
 		std::cout << "Destination " << testRayDestination << std::endl;
-		std::cout << "Color       " << performRayTracing(testRayOrigin, testRayDestination) << std::endl;
+		std::cout << "Color       " << performRayTracing(testRayOrigin, testRayDestination, 0) << std::endl;
 		break;
 	}
 }
@@ -233,5 +245,6 @@ inline Hitpair checkHit(const Triangle & triangle, const Vec3Df & origin, const 
 		result.bHit = true;
 	
 	result.res = res;
+	result.hitPoint = origin + res[2]*dir;
 	return result;
 }

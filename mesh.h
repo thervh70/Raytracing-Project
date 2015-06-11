@@ -103,10 +103,10 @@ class Material
         const Vec3Df& Kd( void ) const { return Kd_; } //diffuse
         const Vec3Df& Ka( void ) const { return Ka_; } //ambiant
         const Vec3Df& Ks( void ) const { return Ks_; } //specular
-        float  Ni( void ) const { return Ni_; } 
+        float  Ni( void ) const { return Ni_; } //unofficial refraction index
         float  Ns( void ) const { return Ns_; } //shininess
-        int       illum(void)const { return illum_;}
-        float  Tr( void ) const { return Tr_; }//can be hijacked, e.g., for transparency
+        int illum( void ) const { return illum_; }
+        float  Tr( void ) const { return Tr_; } //can be hijacked, e.g., for transparency
         const std::string & textureName()//name of the texture image file
         {
             return textureName_;

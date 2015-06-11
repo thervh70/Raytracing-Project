@@ -252,6 +252,8 @@ void keyboard(unsigned char key, int x, int y)
 /* @return amount of seconds the raytracing took */
 double RayTracer::doDaRayTracingShizz() {
 	printf("\nRaytracing a complete %i x %i image \n", WindowSize_X, WindowSize_Y);
+	// Without the following line, changing sizes will mess up the preview.
+	result.writeImageBMP("result.bmp");
 
 	unsigned n = std::thread::hardware_concurrency();
 	n = (n == 0 ? 2 : n);
@@ -266,6 +268,8 @@ double RayTracer::doDaRayTracingShizz() {
 		
 		for (int j = 0; j < n; ++j)
 			t[j].join();
+
+		result.writeImageBMP("result.bmp", 0, y, result._width, n);
 		
 		//print progress once per second
 		if (clock() - prevsec > CLOCKS_PER_SEC) {
@@ -287,6 +291,8 @@ double RayTracer::doDaRayTracingShizz() {
 }
 
 void RayTracer::threadmethod(unsigned int y) {
+	if (y >= WindowSize_Y)
+		return;
 	for (unsigned int x = 0; x<WindowSize_X; ++x)
 	{
 		Vec3Df origin, dest;
