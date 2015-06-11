@@ -74,21 +74,22 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 
 	/**
 	Work In progress, Youri Arkesteijn, trying to get this to work on the same way as it does in scene previeuw with spacebar.
+	**/
 	Vec3Df intersectionPoint = origin + minT * (dest - origin);
 	resCol = Vec3Df(0.0f, 0.0f, 0.0f);
-	int angle;
+	float angle;
 
 	for (Vec3Df v : MyLightPositions) {
-		angle = Vec3Df::cosAngle(intersectionPoint-v, intersectionPoint - origin);
+		angle = Vec3Df::cosAngle(intersectionPoint - v, intersectionPoint - origin);
 
-		if(angle != -2147483648 && angle != 0)
-			std::cout << angle << std::endl;
-
+/*		if(angle != -2147483648 && angle != 0 && angle < 2)
+			std::cout << angle << std::endl;*/
+			
 		if (angle > 0) {
 			resCol = material.Kd()*angle/ MyLightPositions.size();
 		}
 	}
-	**/
+
 //WIP
 /*	n = 0; // Interpolate over vertices
 	point = dir - 2 * Vec3Df::dotProduct(n, dir) * n;
