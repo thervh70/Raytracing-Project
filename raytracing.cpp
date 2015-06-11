@@ -199,18 +199,10 @@ void yourKeyboardFunc(char t, int x, int y, const Vec3Df & rayOrigin, const Vec3
 		}
 		break;
 
-	case 'l':
+	case 'c':
 		//This will generate a SINGLE light source on the position of the camera.
 		MyLightPositions.clear();
-		MyLightPositions.push_back(MyCameraPosition);
-		std::cout << "Single light, located at " << MyCameraPosition << std::endl;
-		break;
-	
-	
-	case 'm':
-		//This will ADD the position of the camera as a light source to the set of current lights.
-		MyLightPositions.push_back(MyCameraPosition);
-		std::cout << "Added extra light, located at " << MyCameraPosition << std::endl;
+		std::cout << "Cleared light sources " << std::endl;
 		break;
 	}
 }
