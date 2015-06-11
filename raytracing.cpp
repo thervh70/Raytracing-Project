@@ -32,7 +32,7 @@ void init()
 	//one first move: initialize the first light source
 	//at least ONE light source has to be in the scene!!!
 	//here, we set it to the current location of the camera
-	MyLightPositions.push_back(*(new Vec3Df(100, 42, 17)));
+	MyLightPositions.push_back(*(new Vec3Df(10, 0, 0)));
 
 	/* FOR TESTING ONLY ~ Maarten
 	Matrix33f m(Vec3Df(3, 4, 9), Vec3Df(5, 12, 8), Vec3Df(9, 3, 1));
@@ -67,11 +67,17 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 		material = MyMesh.materials[MyMesh.triangleMaterials[i]];
 	}
 
+	resCol = material.Kd();
+
+
+	/**
+	Work In progress, Youri Arkesteijn, trying to get this to work on the same way as it does in scene previeuw with spacebar.
 	Vec3Df intersectionPoint = origin + minT * (dest - origin);
 	resCol = Vec3Df(0.0f, 0.0f, 0.0f);
 	int angle;
+
 	for (Vec3Df v : MyLightPositions) {
-		angle = Vec3Df::cosAngle(intersectionPoint-v, dest - origin);
+		angle = Vec3Df::cosAngle(intersectionPoint-v, intersectionPoint - origin);
 
 		if(angle != -2147483648 && angle != 0)
 			std::cout << angle << std::endl;
@@ -80,6 +86,7 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 			resCol = material.Kd()*angle/ MyLightPositions.size();
 		}
 	}
+	**/
 //WIP
 /*	n = 0; // Interpolate over vertices
 	point = dir - 2 * Vec3Df::dotProduct(n, dir) * n;
@@ -178,9 +185,21 @@ void yourKeyboardFunc(char t, int x, int y, const Vec3Df & rayOrigin, const Vec3
 		// and use those coordinates as ray destination
 		testRayDestination = calculateIntersectionPoint(rayOrigin, rayDestination);
 
+
+		for (Vec3Df v : MyLightPositions) {
+			std::cout << "Light position: " << v << std::endl;
+		}
+
 		std::cout << "Origin      " << testRayOrigin << std::endl;
 		std::cout << "Destination " << testRayDestination << std::endl;
 		std::cout << "Color       " << performRayTracing(testRayOrigin, testRayDestination, 0) << std::endl;
+		std::cout << "From Camera to intersection  " << testRayDestination - rayOrigin << std::endl;
+
+		for (Vec3Df v : MyLightPositions) {
+			std::cout << "For light source: " << v << std::endl;
+			std::cout << " | From light to intersection: " << testRayDestination - v << std::endl;
+			std::cout << " | angle camera2int, light2int " << Vec3Df::cosAngle(testRayDestination - v, testRayDestination - rayOrigin) << std::endl;
+		}
 		break;
 	}
 }
