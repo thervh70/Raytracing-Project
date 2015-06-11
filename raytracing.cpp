@@ -285,16 +285,18 @@ void buildKDtree()
 	float xMin, xMax, yMin, yMax, zMin, zMax;
 
 	// Calculate the bounding box of the scene
-	std::vector<Triangle>::const_iterator it = MyMesh.triangles.begin;
+	std::vector<Triangle>::const_iterator it = MyMesh.triangles.begin();
 	xMin = (*it).v[0];
 	xMax = (*it).v[0];
 	yMin = (*it).v[1];
 	yMax = (*it).v[1];
 	zMin = (*it).v[2];
 	zMax = (*it).v[2];
+	++it;
 
 	// Get the smallest and largest x, y and z values of the triangles of the mesh
-	while (++it != MyMesh.triangles.end) {
+	while (it != MyMesh.triangles.end()) {
+		++it;
 		// check x
 		if ((*it).v[0] < xMin)
 			xMin = (*it).v[0];
@@ -314,7 +316,7 @@ void buildKDtree()
 			zMax = (*it).v[2];
 	}
 
-	//TODO: split the scene into planes which contain triangles.
+	//TODO: split the scene into spaces which contain triangles.
 	KDtreeCube scene = KDtreeCube(MyMesh.triangles, xMin, xMax, yMin, yMax, zMin, zMax);
 	unsigned int minTriangles = (int) std::sqrtf( MyMesh.triangles.size());
 	kdTree = splitSpace(scene, 0, minTriangles);

@@ -63,4 +63,9 @@ struct KDtreeCube {
 inline Hitpair checkHit(const Triangle & triangle, const Vec3Df & origin, const Vec3Df & dest, float minT);
 inline Vec3Df calculateIntersectionPoint(const Vec3Df & rayOrigin, const Vec3Df & rayDest);
 
+// KD tree functions
+void buildKDtree();
+std::vector<KDtreeCube> splitSpace(KDtreeCube cube, unsigned int axis, unsigned int minTriangles);
+void removeTrianglesNotInSubSpace(KDtreeCube cube);
+
 #endif
