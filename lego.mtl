@@ -1,0 +1,149 @@
+# Blender MTL File: 'lego.blend'
+# Material Count: 15
+
+newmtl Back-_Red
+Ns 149.019608
+Ka 0.000000 0.000000 0.000000
+Kd 0.321255 0.088345 0.088345
+Ks 0.200000 0.200000 0.200000
+Ni 1.000000
+d 1.000000
+illum 2
+map_Kd C:\Users\Robin\AppData\Local\Temp\wz42c9\Space Marine Hero.png
+
+newmtl Belt-Red
+Ns 149.019608
+Ka 0.000000 0.000000 0.000000
+Kd 0.321255 0.088345 0.088345
+Ks 0.200000 0.200000 0.200000
+Ni 1.000000
+d 1.000000
+illum 2
+map_Kd C:\Users\Robin\AppData\Local\Temp\wz42c9\Space Marine Hero.png
+
+newmtl Black
+Ns 149.019608
+Ka 0.000000 0.000000 0.000000
+Kd 0.051200 0.051200 0.051200
+Ks 0.200000 0.200000 0.200000
+Ni 1.000000
+d 1.000000
+illum 2
+map_Kd C:\Users\Robin\AppData\Local\Temp\wz42c9\Space Marine Hero.png
+
+newmtl Black_NONE
+Ns 149.019608
+Ka 0.000000 0.000000 0.000000
+Kd 0.051200 0.051200 0.051200
+Ks 0.200000 0.200000 0.200000
+Ni 1.000000
+d 1.000000
+illum 2
+
+newmtl Burgundy
+Ns 149.019608
+Ka 0.000000 0.000000 0.000000
+Kd 0.321255 0.088345 0.088345
+Ks 0.200000 0.200000 0.200000
+Ni 1.000000
+d 1.000000
+illum 2
+map_Kd C:\Users\Robin\AppData\Local\Temp\wz42c9\Space Marine Hero Armor.png
+
+newmtl Burgundy_Space_Marine_Hero
+Ns 149.019608
+Ka 0.000000 0.000000 0.000000
+Kd 0.321255 0.088345 0.088345
+Ks 0.200000 0.200000 0.200000
+Ni 1.000000
+d 1.000000
+illum 2
+map_Kd C:\Users\Robin\AppData\Local\Temp\wz42c9\Space Marine Hero.png
+
+newmtl Dark_Gray
+Ns 149.019608
+Ka 0.000000 0.000000 0.000000
+Kd 0.102400 0.102400 0.102400
+Ks 0.200000 0.200000 0.200000
+Ni 1.000000
+d 1.000000
+illum 2
+map_Kd C:\Users\Robin\AppData\Local\Temp\wz42c9\Space Marine Hero Armor.png
+
+newmtl Face
+Ns 149.019608
+Ka 0.000000 0.000000 0.000000
+Kd 0.102400 0.102400 0.102400
+Ks 0.200000 0.200000 0.200000
+Ni 1.000000
+d 1.000000
+illum 2
+map_Kd C:\Users\Robin\AppData\Local\Temp\wz42c9\Space Marine Hero.png
+
+newmtl Legs-_Red
+Ns 149.019608
+Ka 0.000000 0.000000 0.000000
+Kd 0.321255 0.088345 0.088345
+Ks 0.200000 0.200000 0.200000
+Ni 1.000000
+d 1.000000
+illum 2
+map_Kd C:\Users\Robin\AppData\Local\Temp\wz42c9\Space Marine Hero.png
+
+newmtl Light
+Ns 90.196078
+Ka 0.000000 0.000000 0.000000
+Kd 0.409600 0.000000 0.039832
+Ks 0.500000 0.500000 0.500000
+Ni 1.000000
+d 1.000000
+illum 2
+
+newmtl Light_Gray
+Ns 149.019608
+Ka 0.000000 0.000000 0.000000
+Kd 0.359404 0.359404 0.359404
+Ks 0.200000 0.200000 0.200000
+Ni 1.000000
+d 1.000000
+illum 2
+map_Kd C:\Users\Robin\AppData\Local\Temp\wz42c9\Space Marine Hero Armor.png
+
+newmtl Light_Gray_Space_Marine_Hero
+Ns 149.019608
+Ka 0.000000 0.000000 0.000000
+Kd 0.359404 0.359404 0.359404
+Ks 0.200000 0.200000 0.200000
+Ni 1.000000
+d 1.000000
+illum 2
+map_Kd C:\Users\Robin\AppData\Local\Temp\wz42c9\Space Marine Hero.png
+
+newmtl Material.001
+Ns 96.078431
+Ka 0.000000 0.000000 0.000000
+Kd 0.640000 0.000000 0.003498
+Ks 0.500000 0.500000 0.500000
+Ni 1.000000
+d 1.000000
+illum 2
+
+newmtl Torso-_Red
+Ns 149.019608
+Ka 0.000000 0.000000 0.000000
+Kd 0.321255 0.088345 0.088345
+Ks 0.200000 0.200000 0.200000
+Ni 1.000000
+d 1.000000
+illum 2
+map_Kd C:\Users\Robin\AppData\Local\Temp\wz42c9\Space Marine Hero.png
+
+newmtl Visor
+Ns 33.333333
+Ka 0.000000 0.000000 0.000000
+Kd 0.409600 0.292872 0.124367
+Ks 1.000000 0.900530 0.420120
+Ni 1.000000
+d 0.950000
+illum 2
+map_Kd C:\Users\Robin\AppData\Local\Temp\wz42c9\Space Marine Hero Armor.png
