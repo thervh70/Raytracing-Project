@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <assert.h>
+#include <fstream>
 
 //Image class 
 //This class can be used to write your final result to an image. 
@@ -101,6 +102,7 @@ public:
 
 	bool writeImagePPM(const char * filename);
 	bool writeImageBMP(const char * filename);
+	bool writeImageBMP(const char * filename, int x, int y, int w, int h);
 };
 
 bool Image::writeImagePPM(const char * filename)
@@ -190,6 +192,24 @@ bool Image::writeImageBMP(const char * filename)
 	}
 
 	fclose(file);
+	return true;
+}
+
+bool Image::writeImageBMP(const char* filename, int x, int y, int w, int h) {
+	std::fstream s(filename, std::fstream::in | std::fstream::out | std::fstream::binary);
+	for (int Y = y; Y < y + h; ++Y) {
+		std::vector<char> imageC(w * 3);
+		for (int j = x; j < x + w; ++j) {
+			// RGB are flipped to BGR
+			imageC[(j - x) * 3] = (char)(_image[Y*_width * 3 + j*3 + 2] * 255.0f);
+			imageC[(j - x) * 3 + 1] = (char)(_image[Y*_width * 3 + j*3 + 1] * 255.0f);
+			imageC[(j - x) * 3 + 2] = (char)(_image[Y*_width * 3 + j*3] * 255.0f);
+		}
+		const std::vector<char> imageConst(imageC);
+		s.seekp(54 + (Y*w + x) * 3, std::ios_base::beg);
+		s.write(&(imageConst[0]), w * 3);
+	}
+	s.close();
 	return true;
 }
 
