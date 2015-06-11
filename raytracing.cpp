@@ -149,28 +149,10 @@ void yourKeyboardFunc(char t, int x, int y, const Vec3Df & rayOrigin, const Vec3
 		//I use these variables in the debugDraw function to draw the corresponding ray.
 		//try it: Press a key, move the camera, see the ray that was launched as a line.
 		testRayOrigin = rayOrigin;
-		//testRayDestination = rayDestination;
 
-		// calculate the coördinates where the ray will hit an object
-		// and use those coördinates as ray destination
-		try
-		{
-			// !!! CURRENTLY ONLY WORKS FOR THE FRONT OF THE SQUARE (WIP) !!!
-			testRayDestination = calculateIntersectionPoint(rayOrigin, rayDestination);
-		}
-		catch (int e)
-		{
-			if (e == 1)
-			{
-				std::cout << "exception (1) : ray doesn't intersect with any objects" << std::endl;
-				testRayDestination = rayDestination;
-			}
-		}
-		
-/*		if (&intersectionPoint == nullptr)
-			testRayDestination = rayDestination;
-		else
-			testRayDestination = intersectionPoint;*/
+		// calculate the coordinates where the ray will hit an object
+		// and use those coordinates as ray destination
+		testRayDestination = calculateIntersectionPoint(rayOrigin, rayDestination);
 
 		std::cout << "Origin      " << testRayOrigin << std::endl;
 		std::cout << "Destination " << testRayDestination << std::endl;
@@ -179,7 +161,8 @@ void yourKeyboardFunc(char t, int x, int y, const Vec3Df & rayOrigin, const Vec3
 	}
 }
 
-// throws exception 1 if no intersection point was found
+// Return the intersection point of the ray with the object in the scene
+// return the rayDest if no object was hit
 inline Vec3Df calculateIntersectionPoint(const Vec3Df & rayOrigin, const Vec3Df & rayDest)
 {
 	// Get the triangles
@@ -199,14 +182,14 @@ inline Vec3Df calculateIntersectionPoint(const Vec3Df & rayOrigin, const Vec3Df 
 		closestTriangle = &triangles[i];
 	}
 
-	// If no intersection, throw an exception
+	// If no intersection, return the rayDest
 	if (closestTriangle == nullptr)
 	{
-		throw 1;
+		return rayDest;
 	}
 
-	// Return the intersecton point with the triangle (NOTE: DOESN"T WORK YET)
-	return rayOrigin + hitpair.res[2] * (rayDest - rayOrigin);
+	// Return the intersecton point with the triangle
+	return rayOrigin + minT * (rayDest - rayOrigin);
 }
 
 // check if the triangle is hit by the ray from origin to dest and closer to the origin than minT
