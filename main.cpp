@@ -287,6 +287,8 @@ double RayTracer::doDaRayTracingShizz() {
 }
 
 void RayTracer::threadmethod(unsigned int y) {
+	if (y >= WindowSize_Y)
+		return;
 	for (unsigned int x = 0; x<WindowSize_X; ++x)
 	{
 		Vec3Df origin, dest;
