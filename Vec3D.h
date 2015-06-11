@@ -194,6 +194,7 @@ public:
 	}
 
 	static inline T cosAngle(const Vec3D & a, const Vec3D & b) {
+		if (a.getSquaredLength() == 0 || b.getSquaredLength == 0) return 0;
 		return (a[0] * b[0] + a[1] * b[1] + a[2] * b[2])/(a.getLength()*b.getLength());
 	}
 
