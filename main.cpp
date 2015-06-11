@@ -307,7 +307,7 @@ void RayTracer::threadmethod(unsigned int y) {
 			(1 - yscale)*(xscale*dest01 + (1 - xscale)*dest11);
 
 		//launch raytracing for the given ray.
-		Vec3Df rgb = performRayTracing(origin, dest);
+		Vec3Df rgb = performRayTracing(origin, dest, 0);
 		//store the result in an image 
 		result.setPixel(x, y, RGBValue(rgb[0], rgb[1], rgb[2]));
 	}
