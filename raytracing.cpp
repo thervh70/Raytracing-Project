@@ -32,7 +32,7 @@ void init()
 	//one first move: initialize the first light source
 	//at least ONE light source has to be in the scene!!!
 	//here, we set it to the current location of the camera
-	MyLightPositions.push_back(MyCameraPosition);
+	MyLightPositions.push_back(*(new Vec3Df(100, 42, 17)));
 
 	/* FOR TESTING ONLY ~ Maarten
 	Matrix33f m(Vec3Df(3, 4, 9), Vec3Df(5, 12, 8), Vec3Df(9, 3, 1));
@@ -64,11 +64,12 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest)
 		minT = hitpair.res[2];
 
 		material = MyMesh.materials[MyMesh.triangleMaterials[i]];
+	}
 
-		resCol = 0;
-		for (Vec3Df v : MyLightPositions) {
-			resCol += material.Kd()*Vec3Df::cosAngle(v, MyCameraPosition);
-		}
+	Vec3Df intersectionPoint = origin + minT * (dest - origin);
+	resCol = Vec3Df(0, 0, 0);
+	for (Vec3Df v : MyLightPositions) {
+		resCol += material.Kd()*Vec3Df::cosAngle(v - intersectionPoint, dest - origin);
 	}
 
 	// f(x,y) = (1 - x)*v1 + (x - y)*v2 + y*v3
