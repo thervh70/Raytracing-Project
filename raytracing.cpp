@@ -64,8 +64,11 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest)
 		minT = hitpair.res[2];
 
 		material = MyMesh.materials[MyMesh.triangleMaterials[i]];
-		
-		resCol = material.Kd();
+
+		resCol = 0;
+		for (Vec3Df v : MyLightPositions) {
+			resCol += material.Kd()*Vec3Df::cosAngle(v, MyCameraPosition);
+		}
 	}
 
 	// f(x,y) = (1 - x)*v1 + (x - y)*v2 + y*v3
