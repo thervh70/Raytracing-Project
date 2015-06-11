@@ -190,12 +190,9 @@ void yourKeyboardFunc(char t, int x, int y, const Vec3Df & rayOrigin, const Vec3
 		std::cout << "Origin      " << testRayOrigin << std::endl;
 		std::cout << "Destination " << testRayDestination << std::endl;
 		std::cout << "Color       " << performRayTracing(testRayOrigin, testRayDestination, 0) << std::endl;
-		std::cout << "From Camera to intersection  " << testRayDestination - rayOrigin << std::endl;
-
+		
 		for (Vec3Df v : MyLightPositions) {
-			std::cout << "For light source: " << v << std::endl;
-			std::cout << " | From light to intersection: " << testRayDestination - v << std::endl;
-			std::cout << " | angle camera2int, light2int " << Vec3Df::cosAngle(testRayDestination - v, testRayDestination - rayOrigin) << std::endl;
+			std::cout << "  Light " << Vec3Df::cosAngle(testRayDestination - v, testRayDestination - rayOrigin) << " from " << v << std::endl;
 		}
 		break;
 
