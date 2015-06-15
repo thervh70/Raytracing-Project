@@ -5,6 +5,8 @@
 * Make a copy of this file as 'config.h' and change it to match your system.
 */
 
+#include <thread> // to get number of available threads via hardware_concurrency()
+
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
 
@@ -16,5 +18,8 @@ const unsigned WindowSize_X = 800;  // resolution X
 const unsigned WindowSize_Y = 800;  // resolution Y
 const unsigned WindowPos_X = 400;  // position X
 const unsigned WindowPos_Y = 200;  // position Y
+
+/* Amount of threads run at a time */
+const unsigned Thread_Amount = std::thread::hardware_concurrency() - 1;
 
 #endif
