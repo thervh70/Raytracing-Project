@@ -43,16 +43,20 @@ public:
 		begin = clock();
 		prevsec = begin;
 
+		for (int i = 0; i < 16; ++i)
+			pixelsdone[i] = 0;
+
 		produceRay(0, 0, &origin00, &dest00);
 		produceRay(0, WindowSize_Y - 1, &origin01, &dest01);
 		produceRay(WindowSize_X - 1, 0, &origin10, &dest10);
 		produceRay(WindowSize_X - 1, WindowSize_Y - 1, &origin11, &dest11);
 	};
 	static void produceRay(int x_I, int y_I, Vec3Df * origin, Vec3Df * dest);
-	void threadmethod(unsigned int y);
+	void threadmethod(int threadID, unsigned int ystart, unsigned int yend);
 	double doDaRayTracingShizz();
 private:
 	clock_t begin, prevsec;
+	int pixelsdone[16];
 
 	//Setup an image with the size of the current image.
 	Image result;
@@ -255,30 +259,37 @@ double RayTracer::doDaRayTracingShizz() {
 	// Without the following line, changing sizes will mess up the preview.
 	result.writeImageBMP("result.bmp");
 
-	unsigned n = std::thread::hardware_concurrency();
-	n = (n == 0 ? 2 : n);
-	n = (n > 8 ? 8 : n);
-	n *= 2; // More efficient than *1, apparently, or at least for me
-	std::thread t[16]; // = 8 * 2
-	printf("There are %d threads, %d are fired at a time \n", n/2, n);
+	unsigned n = Thread_Amount;
+	n = (n <  1 ?  1 : n); //not less than  1, duh. xD
+	n = (n > 16 ? 16 : n); //not more than 16, as thread array is hardcoded length 16
+	std::thread t[16];
+	printf("There are %d threads \n", n);
+	float linesperthread = float(WindowSize_Y) / float(n);
 
-	for (unsigned int y = 0; y < WindowSize_Y; y += n) {
-		for (int j = 0; j < n; ++j)
-			t[j] = std::thread(&RayTracer::threadmethod, this, y + j);
+	for (int j = 0; j < n; ++j)
+		t[j] = std::thread(&RayTracer::threadmethod, this, j, j * linesperthread, (j+1) * linesperthread);
 		
-		for (int j = 0; j < n; ++j)
-			t[j].join();
-
-		result.writeImageBMP("result.bmp", 0, y, result._width, n);
-		
+	int currpx;
+	int totalsize = WindowSize_X*WindowSize_Y;
+	do {
 		//print progress once per second
-		if (clock() - prevsec > CLOCKS_PER_SEC) {
-			int currpx = y*WindowSize_Y;
-			int s = WindowSize_X*WindowSize_Y;
-			printf("%3d%%\tPixel %8d/%8d\n", 100 * currpx / s, currpx, s);
-			prevsec += CLOCKS_PER_SEC;
-		}
-	}
+		Sleep(1000);
+		currpx = 0;
+		for (int j = 0; j < n; ++j)
+			currpx += pixelsdone[j];
+
+		clock_t now = clock();
+		double elapsed   = double(now - begin);
+		double totaltime = double(totalsize) / double(currpx) * elapsed;
+		double remaining = (totaltime - elapsed) / CLOCKS_PER_SEC;
+		int r = (int)round(remaining);
+
+		printf("%3d%%\tPixel %8d/%8d    %5d s remaining\n", 100 * currpx / totalsize, currpx, totalsize, r);
+
+	} while (currpx < result._width * result._height);
+	
+	for (int j = 0; j < n; ++j)
+		t[j].join();
 
 	clock_t end = clock();
 	double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
@@ -290,26 +301,32 @@ double RayTracer::doDaRayTracingShizz() {
 	return elapsed_secs;
 }
 
-void RayTracer::threadmethod(unsigned int y) {
-	if (y >= WindowSize_Y)
-		return;
-	for (unsigned int x = 0; x<WindowSize_X; ++x)
+void RayTracer::threadmethod(int threadID, unsigned int ystart, unsigned int yend) {
+	for (unsigned int y = ystart; y < yend; ++y)
 	{
-		Vec3Df origin, dest;
-		//produce the rays for each pixel, by interpolating 
-		//the four rays of the frustum corners.
-		float xscale = 1.0f - float(x) / (WindowSize_X - 1);
-		float yscale = 1.0f - float(y) / (WindowSize_Y - 1);
+		if (y >= WindowSize_Y)
+			return;
 
-		origin = yscale*(xscale*origin00 + (1 - xscale)*origin10) +
-			(1 - yscale)*(xscale*origin01 + (1 - xscale)*origin11);
-		dest = yscale*(xscale*dest00 + (1 - xscale)*dest10) +
-			(1 - yscale)*(xscale*dest01 + (1 - xscale)*dest11);
+		for (unsigned int x = 0; x < WindowSize_X; ++x)
+		{
+			Vec3Df origin, dest;
+			//produce the rays for each pixel, by interpolating 
+			//the four rays of the frustum corners.
+			float xscale = 1.0f - float(x) / (WindowSize_X - 1);
+			float yscale = 1.0f - float(y) / (WindowSize_Y - 1);
 
-		//launch raytracing for the given ray.
-		Vec3Df rgb = performRayTracing(origin, dest, 0);
-		//store the result in an image 
-		result.setPixel(x, y, RGBValue(rgb[0], rgb[1], rgb[2]));
+			origin = yscale*(xscale*origin00 + (1 - xscale)*origin10) +
+				(1 - yscale)*(xscale*origin01 + (1 - xscale)*origin11);
+			dest = yscale*(xscale*dest00 + (1 - xscale)*dest10) +
+				(1 - yscale)*(xscale*dest01 + (1 - xscale)*dest11);
+
+			//launch raytracing for the given ray.
+			Vec3Df rgb = performRayTracing(origin, dest, 0);
+			//store the result in an image 
+			result.setPixel(x, y, RGBValue(rgb[0], rgb[1], rgb[2]));
+			++pixelsdone[threadID];
+		}
+		result.writeImageBMP("result.bmp", 0, y, result._width, 1);
 	}
 }
 
