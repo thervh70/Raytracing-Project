@@ -40,9 +40,6 @@ public:
 	RayTracer(void) {
 		Image result(WindowSize_X, WindowSize_Y);
 
-		begin = clock();
-		prevsec = begin;
-
 		for (int i = 0; i < 16; ++i)
 			pixelsdone[i] = 0;
 
@@ -55,7 +52,7 @@ public:
 	void threadmethod(int threadID, unsigned int ystart, unsigned int yend);
 	double doDaRayTracingShizz();
 private:
-	clock_t begin, prevsec;
+	clock_t begin;
 	int pixelsdone[16];
 
 	//Setup an image with the size of the current image.
@@ -259,18 +256,20 @@ double RayTracer::doDaRayTracingShizz() {
 	// Without the following line, changing sizes will mess up the preview.
 	result.writeImageBMP("result.bmp");
 
+	begin = clock();
+
 	unsigned n = Thread_Amount;
 	n = (n <  1 ?  1 : n); //not less than  1, duh. xD
 	n = (n > 16 ? 16 : n); //not more than 16, as thread array is hardcoded length 16
 	std::thread t[16];
-	printf("There are %d threads \n", n);
+	printf("There are %d threads", n);
 	float linesperthread = float(WindowSize_Y) / float(n);
 
 	for (int j = 0; j < n; ++j)
 		t[j] = std::thread(&RayTracer::threadmethod, this, j, j * linesperthread, (j+1) * linesperthread);
 		
 	int currpx;
-	int totalsize = WindowSize_X*WindowSize_Y;
+	int totalsize = WindowSize_X * WindowSize_Y;
 	do {
 		//print progress once per second
 		Sleep(1000);
@@ -284,7 +283,7 @@ double RayTracer::doDaRayTracingShizz() {
 		double remaining = (totaltime - elapsed) / CLOCKS_PER_SEC;
 		int r = (int)round(remaining);
 
-		printf("%3d%%\tPixel %8d/%8d    %5d s remaining\n", 100 * currpx / totalsize, currpx, totalsize, r);
+		printf("\n%3d%%\tPixel %8d/%8d  %5d s remaining", 100 * currpx / totalsize, currpx, totalsize, r);
 
 	} while (currpx < result._width * result._height);
 	
@@ -293,7 +292,7 @@ double RayTracer::doDaRayTracingShizz() {
 
 	clock_t end = clock();
 	double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
-	printf("Raytracing comlete in %g seconds, storing result...\n", elapsed_secs);
+	printf("\nRaytracing comlete in %g seconds, storing result...\n", elapsed_secs);
 	result.writeImagePPM("result.ppm");
 	printf("Stored result in result.ppm");
 	result.writeImageBMP("result.bmp");
@@ -305,7 +304,7 @@ void RayTracer::threadmethod(int threadID, unsigned int ystart, unsigned int yen
 	for (unsigned int y = ystart; y < yend; ++y)
 	{
 		if (y >= WindowSize_Y)
-			return;
+			break;
 
 		for (unsigned int x = 0; x < WindowSize_X; ++x)
 		{
@@ -328,6 +327,7 @@ void RayTracer::threadmethod(int threadID, unsigned int ystart, unsigned int yen
 		}
 		result.writeImageBMP("result.bmp", 0, y, result._width, 1);
 	}
+	printf("   %d done", threadID + 1);
 }
 
 //transform the x, y position on the screen into the corresponding 3D world position
