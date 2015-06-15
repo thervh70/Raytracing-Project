@@ -9,11 +9,22 @@
 #include "Matrix33.h"
 
 
-//temporary variables
-//these are only used to illustrate 
-//a simple debug drawing. A ray 
-Vec3Df testRayOrigin;
-Vec3Df testRayDestination;
+struct TestRay {
+	Vec3Df origin;
+	Vec3Df destination;
+	Vec3Df color;
+
+	TestRay() 
+		: origin(Vec3Df()), destination(Vec3Df()), color(Vec3Df(1, 1, 1)) {};
+
+	TestRay(Vec3Df o, Vec3Df d) 
+		: origin(o), destination(d), color(Vec3Df(1, 1, 1)) {};
+
+	TestRay(Vec3Df o, Vec3Df d, Vec3Df c) 
+		: origin(o), destination(d), color(c) {};
+};
+// All the rays in testRay will be drawn in yourDebugDraw().
+std::vector<TestRay> testRay;
 
 // built KD tree
 std::vector<KDtreeCube> kdTree;
@@ -35,6 +46,8 @@ void init()
 	//at least ONE light source has to be in the scene!!!
 	//here, we set it to the current location of the camera
 	MyLightPositions.push_back(*(new Vec3Df(10, 0, 0)));
+
+	testRay.push_back(TestRay());
 
 	/* FOR TESTING ONLY ~ Maarten
 	Matrix33f m(Vec3Df(3, 4, 9), Vec3Df(5, 12, 8), Vec3Df(9, 3, 1));
@@ -132,16 +145,22 @@ void yourDebugDraw()
 	//as an example: we draw the test ray, which is set by the keyboard function
 	glPushAttrib(GL_ALL_ATTRIB_BITS);
 	glDisable(GL_LIGHTING);
+
 	glBegin(GL_LINES);
-	glColor3f(0,1,1);
-	glVertex3f(testRayOrigin[0], testRayOrigin[1], testRayOrigin[2]);
-	glColor3f(0,0,1);
-	glVertex3f(testRayDestination[0], testRayDestination[1], testRayDestination[2]);
+	for (int i = 0; i < testRay.size(); ++i) {
+		glColor3fv(testRay[i].color.pointer());
+		glVertex3fv(testRay[i].origin.pointer());
+		glVertex3fv(testRay[i].destination.pointer());
+	}
 	glEnd();
+
+	//we also draw the light positions
 	glPointSize(10);
 	glBegin(GL_POINTS);
-	glVertex3fv(MyLightPositions[0].pointer());
+		for (int i = 0; i < MyLightPositions.size(); ++i)
+			glVertex3fv(MyLightPositions[i].pointer());
 	glEnd();
+
 	glPopAttrib();
 	
 	//draw whatever else you want...
@@ -178,23 +197,26 @@ void yourKeyboardFunc(char t, int x, int y, const Vec3Df & rayOrigin, const Vec3
 		//here, as an example, I use the ray to fill in the values for my upper global ray variable
 		//I use these variables in the debugDraw function to draw the corresponding ray.
 		//try it: Press a key, move the camera, see the ray that was launched as a line.
-		testRayOrigin = rayOrigin;
+		testRay[0].origin = rayOrigin;
 
 		// calculate the coordinates where the ray will hit an object
 		// and use those coordinates as ray destination
-		testRayDestination = calculateIntersectionPoint(rayOrigin, rayDestination);
+		testRay[0].destination = calculateIntersectionPoint(rayOrigin, rayDestination);
+
+		// make the ray the color of the intersection point (and slightly brighter)
+		testRay[0].color = performRayTracing(testRay[0].origin, testRay[0].destination, 0) + Vec3Df(0.25, 0.25, 0.25);
 
 
 		for (Vec3Df v : MyLightPositions) {
 			std::cout << "Light position: " << v << std::endl;
 		}
 
-		std::cout << "Origin      " << testRayOrigin << std::endl;
-		std::cout << "Destination " << testRayDestination << std::endl;
-		std::cout << "Color       " << performRayTracing(testRayOrigin, testRayDestination, 0) << std::endl;
+		std::cout << "Origin      " << testRay[0].origin << std::endl;
+		std::cout << "Destination " << testRay[0].destination << std::endl;
+		std::cout << "Color       " << testRay[0].color << std::endl;
 		
 		for (Vec3Df v : MyLightPositions) {
-			std::cout << "  Light " << Vec3Df::cosAngle(testRayDestination - v, testRayDestination - rayOrigin) << " from " << v << std::endl;
+			std::cout << "  Light " << Vec3Df::cosAngle(testRay[0].destination - v, testRay[0].destination - rayOrigin) << " from " << v << std::endl;
 		}
 		break;
 
