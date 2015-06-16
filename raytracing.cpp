@@ -65,8 +65,9 @@ void init()
 //return the color of your pixel.
 Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 {
-	Vec3Df resCol, point, normal, dir = dest - origin;
+	Vec3Df resCol, point, normal, n, v0, v1, v2, vec1, vec2, dir = dest - origin;
 	Hitpair hitpair;
+	Triangle triangle;
 	float t, D, minT = std::numeric_limits<float>::max();
 	int triangleIndex;
 	std::vector<Triangle> triangles = MyMesh.triangles;
@@ -75,6 +76,7 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 
 	for (int i = 0; i < triangles.size(); ++i)
 	{
+
 		hitpair = checkHit(triangles[i], origin, dest, minT);
 
 		if (!hitpair.bHit)
@@ -84,6 +86,7 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 		minT = hitpair.res[2];
 		triangleIndex = i;
 		material = MyMesh.materials[MyMesh.triangleMaterials[i]];
+		triangle = triangles[i];
 	}
 
 	if (hit == false) return Vec3Df(0.0f, 0.0f, 0.0f);
@@ -151,16 +154,26 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 		resCol += material.Kd()*std::pow(angle, specularHardness)/MyLightPositions.size();
 	}
 
-//WIP
-/*	n = 0; // Interpolate over vertices
-	point = dir - 2 * Vec3Df::dotProduct(n, dir) * n;
+//WIP Mathias
 	if (material.has_illum()) {
 		int illum = material.illum();
 		if (illum == 3) {
+			// Vertices of the triangle
+			v0 = MyMesh.vertices[triangle.v[0]].p;
+			v1 = MyMesh.vertices[triangle.v[1]].p;
+			v2 = MyMesh.vertices[triangle.v[2]].p;
+
+			// Vector from v2 to v0
+			vec1 = v0 - v2;
+			// Vector from v2 to v1
+			vec2 = v1 - v2;
+
+			n = Vec3Df::crossProduct(vec1, vec2);
+			point = dir - 2 * Vec3Df::dotProduct(n, dir) * n;
 
 			performRayTracing(hitpair.hitPoint, point, k++);
 		}
-	}*/
+	}
 
 
 	// f(x,y) = (1 - x)*v1 + (x - y)*v2 + y*v3
