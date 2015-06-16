@@ -219,6 +219,7 @@ void yourKeyboardFunc(char t, int x, int y, const Vec3Df & rayOrigin, const Vec3
 		// make the ray the color of the intersection point (and slightly brighter)
 		testRay[0].color = performRayTracing(testRay[0].origin, testRay[0].destination, 0) + Vec3Df(0.25, 0.25, 0.25);
 
+	//	buildKDtree();
 
 		for (Vec3Df v : MyLightPositions) {
 			std::cout << "Light position: " << v << std::endl;
@@ -332,7 +333,6 @@ void buildKDtree()
 
 	// Get the smallest and largest x, y and z values of the triangles of the mesh
 	while (it != MyMesh.triangles.end()) {
-		++it;
 		// check x
 		if ((*it).v[0] < xMin)
 			xMin = (*it).v[0];
@@ -350,6 +350,7 @@ void buildKDtree()
 			zMin = (*it).v[2];
 		else if ((*it).v[2] > zMax)
 			zMax = (*it).v[2];
+		++it;
 	}
 
 	//TODO: split the scene into spaces which contain triangles.
@@ -420,4 +421,32 @@ std::vector<KDtreeCube> splitSpace(KDtreeCube cube, unsigned int axis, unsigned 
 void removeTrianglesNotInSubSpace(KDtreeCube cube)
 {
 	//TODO: find which triangles (partly) lie within the defined cube
+	Vec3Df v0, v1, v2;
+
+	std::vector<Triangle> result;
+
+	//very simple, but not always correct approach (in case there are very large triangles):
+	//if a point of a triangle lies within the space, the triangle lies inside of the space
+	std::vector<Triangle> triangles = cube.triangles;
+	for (int i = 0; i < triangles.size(); ++i)
+	{
+		//if triangle i lies within the boundaries, add it to result
+		Triangle t = triangles[i];
+		v0 = MyMesh.vertices[t.v[0]].p;
+		v1 = MyMesh.vertices[t.v[1]].p;
+		v2 = MyMesh.vertices[t.v[2]].p;
+		
+		//check first vertex
+		if (v0.p[0] < cube.xEnd && v0.p[0] > cube.xStart && v0.p[1] < cube.yEnd && v0.p[1] > cube.yStart && v0.p[2] < cube.zEnd && v0.p[2] > cube.zStart)
+			result.push_back(t);
+		//check second vertex
+		else if (v1.p[0] < cube.xEnd && v1.p[0] > cube.xStart && v1.p[1] < cube.yEnd && v1.p[1] > cube.yStart && v1.p[2] < cube.zEnd && v1.p[2] > cube.zStart)
+			result.push_back(t);
+		// check third vertex
+		else if (v2.p[0] < cube.xEnd && v2.p[0] > cube.xStart && v2.p[1] < cube.yEnd && v2.p[1] > cube.yStart && v2.p[2] < cube.zEnd && v2.p[2] > cube.zStart)
+			result.push_back(t);
+	}
+
+	//replace old triangle list with the new one
+	cube.triangles = result;
 }
