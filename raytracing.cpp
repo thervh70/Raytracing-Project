@@ -85,6 +85,18 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 		material = MyMesh.materials[MyMesh.triangleMaterials[i]];
 		triangle = triangles[i];
 		hitPoint = hitpair.hitPoint;
+
+		/**
+		Shadows
+		**/
+
+		//Find vectors from current triangle to all lights
+		//If dotproduct of surface normal with surface-light vector is < 0
+		//Object is shadowing itself so therefore no need to trace.
+
+		//Check whether this vector does hit any other objects (blocking light)
+		//If (hitObject) shadow from that light
+
 	}
 	if (debug)
 		testRay[k].destination = hit ? hitPoint : dest;
@@ -152,7 +164,7 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 		angle = Vec3Df::cosAngle(TriangleNormal, halfwayVector);
 		if (angle < 0)
 			angle = -angle;
-		resCol += material.Kd()*std::pow(angle, specularHardness)/MyLightPositions.size();
+		resCol += material.Ks()*std::pow(angle, specularHardness) / MyLightPositions.size();
 	}
 
 	if (material.illum() == 3) {
@@ -165,7 +177,7 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 		if (debug)
 			testRay.push_back(TestRay(newOrigin, Vec3Df(), Vec3Df()));
 
-		resCol = 0.2*resCol + 0.8*performRayTracing(newOrigin, newDest, ++k);
+		resCol = 0.5*resCol + 0.5*performRayTracing(newOrigin, newDest, ++k);
 
 		if (debug)
 			testRay[k].color = resCol;
