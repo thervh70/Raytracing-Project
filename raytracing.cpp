@@ -86,8 +86,11 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 		triangle = triangles[i];
 		hitPoint = hitpair.hitPoint;
 	}
+	if (debug)
+		testRay[k].destination = hit ? hitPoint : dest;
 
-	if (hit == false) return backgroundColor;
+	if (!hit) return backgroundColor;
+
 
 	// Normals of three vectors of triangle
 	Vec3Df
@@ -159,10 +162,13 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 			newOrigin = hitPoint + 0.001 * reflectdir,
 			newDest = hitPoint + reflectdir;
 
+		if (debug)
+			testRay.push_back(TestRay(newOrigin, Vec3Df(), Vec3Df()));
+
 		resCol = 0.2*resCol + 0.8*performRayTracing(newOrigin, newDest, ++k);
 
 		if (debug)
-			testRay.push_back(TestRay(newOrigin, newDest, resCol));
+			testRay[k].color = resCol;
 	}
 
 
@@ -260,7 +266,7 @@ void yourKeyboardFunc(char t, int x, int y, const Vec3Df & rayOrigin, const Vec3
 
 		// calculate the coordinates where the ray will hit an object
 		// and use those coordinates as ray destination
-		testRay[0].destination = calculateIntersectionPoint(rayOrigin, rayDestination);
+		testRay[0].destination = rayDestination;
 
 		// make the ray the color of the intersection point (and slightly brighter)
 		testRay[0].color = performRayTracing(testRay[0].origin, testRay[0].destination, 0);
@@ -291,7 +297,9 @@ void yourKeyboardFunc(char t, int x, int y, const Vec3Df & rayOrigin, const Vec3
 
 // Return the intersection point of the ray with the object in the scene
 // return the rayDest if no object was hit
-inline Vec3Df calculateIntersectionPoint(const Vec3Df & rayOrigin, const Vec3Df & rayDest)
+// Maarten - I think we don't need this function anymore, as this was used for debug, 
+// but the debug stuff has been moved into performRayTracing via bool debug
+/*inline Vec3Df calculateIntersectionPoint(const Vec3Df & rayOrigin, const Vec3Df & rayDest)
 {
 	// Get the triangles
 	std::vector<Triangle> triangles = MyMesh.triangles;
@@ -318,7 +326,7 @@ inline Vec3Df calculateIntersectionPoint(const Vec3Df & rayOrigin, const Vec3Df 
 
 	// Return the intersecton point with the triangle
 	return rayOrigin + minT * (rayDest - rayOrigin);
-}
+}*/
 
 // check if the triangle is hit by the ray from origin to dest and closer to the origin than minT
 inline Hitpair checkHit(const Triangle & triangle, const Vec3Df & origin, const Vec3Df & dest, float minT)
