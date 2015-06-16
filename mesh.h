@@ -138,6 +138,7 @@ class Material
 //and 3 indices to refer to texture coordinates (optional)
  class Triangle {
 public:
+	Vec3Df* normal = nullptr;
     inline Triangle () {
         v[0] = v[1] = v[2] = 0;
     }
@@ -160,6 +161,17 @@ public:
         t[1] = t1;
         t[2] = t2;
     }
+	/*
+	inline Vec3Df getNormal() {
+		if (normal == nullptr) {
+			normal = &Vec3Df::crossProduct(
+				MyMesh.vertices[v[1]].p - MyMesh.vertices[v[0]].p, 
+				MyMesh.vertices[v[2]].p - MyMesh.vertices[v[0]].p
+			);
+		}
+		return *normal;
+	}
+	*/
     inline virtual ~Triangle () {}
     inline Triangle & operator= (const Triangle & t2) {
         v[0] = t2.v[0];
@@ -185,7 +197,7 @@ public:
     inline Mesh (const std::vector<Vertex> & v, const std::vector<Triangle> & t) : vertices (v), triangles (t)  {}
     bool loadMesh(const char * filename, bool randomizeTriangulation);
 	bool loadMtl(const char * filename, std::map<std::string, unsigned int> & materialIndex);
-    void computeVertexNormals ();
+	void computeVertexNormals();
     void draw();
     void drawSmooth();
 

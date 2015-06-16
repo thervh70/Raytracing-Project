@@ -7,6 +7,7 @@
 #include "config.h"
 #include "Vec3D.h"
 #include "Matrix33.h"
+#include "settings.h"
 
 
 struct TestRay {
@@ -64,11 +65,13 @@ void init()
 //return the color of your pixel.
 Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 {
-	Vec3Df resCol, point, n, dir = dest - origin;
+	Vec3Df resCol, point, normal, dir = dest - origin;
 	Hitpair hitpair;
 	float t, D, minT = std::numeric_limits<float>::max();
+	int triangleIndex;
 	std::vector<Triangle> triangles = MyMesh.triangles;
 	Material material;
+	bool hit = false;
 
 	for (int i = 0; i < triangles.size(); ++i)
 	{
@@ -77,26 +80,75 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 		if (!hitpair.bHit)
 			continue;
 
+		hit = true;
 		minT = hitpair.res[2];
-
+		triangleIndex = i;
 		material = MyMesh.materials[MyMesh.triangleMaterials[i]];
 	}
 
-	/**
-	Work In progress, Youri Arkesteijn, trying to get this to work on the same way as it does in scene previeuw with spacebar.
-	**/
+	if (hit == false) return Vec3Df(0.0f, 0.0f, 0.0f);
+
+	// Calculate intersection point with triangle from origin
 	Vec3Df intersectionPoint = origin + minT * (dest - origin);
-	resCol = material.Kd()*0.04f;
-	float angle;
+	Vec3Df
+		a = MyMesh.vertices[MyMesh.triangles[triangleIndex].v[0]].n,
+		b = MyMesh.vertices[MyMesh.triangles[triangleIndex].v[1]].n,
+		c = MyMesh.vertices[MyMesh.triangles[triangleIndex].v[2]].n;
+
+	/*std::cout
+		<< "trianglenormal: " << (*MyMesh.triangles[triangleIndex].normal) << std::endl
+		<< "a-normal: " << a << std::endl
+		<< "b-normal: " << b << std::endl
+		<< "c-normal: " << c << std::endl
+		<< "a-b scalar: " << hitpair.res[0] << std::endl
+		<< "a-c scalar: " << hitpair.res[1] << std::endl
+		<< "a-b normal: " << a*(1 - hitpair.res[0]) + b*hitpair.res[0] << std::endl
+		<< "a-c normal: " << a*(1 - hitpair.res[1]) + c*hitpair.res[1] << std::endl
+		<< "bipolarinterp-normal: " << (a*(1 - hitpair.res[0]) + b*hitpair.res[0] + a*(1 - hitpair.res[1]) + c*hitpair.res[1]) / 2 << std::endl;
+	*/
+
+
+	/**
+	Vertex normal biliniear interpolation shading mode
+	**/
+	//Vec3Df TriangleNormal = (a*(1 - hitpair.res[0]) + b*hitpair.res[0] + a*(1 - hitpair.res[1]) + c*hitpair.res[1]);
+
+	/**
+	Triangle normal shading mode.
+	**/
+	Vec3Df TriangleNormal = (*MyMesh.triangles[triangleIndex].normal);
+
+	// default lighting in all parts that even are in shadow everywhere.
+	resCol = material.Kd()*backgroundlighting;
+
+	float angle, distanceToLight;
+	Vec3Df lightToIntersect, vieuwToIntersect, halfwayVector;
 
 	for (Vec3Df v : MyLightPositions) {
-		angle = Vec3Df::cosAngle(intersectionPoint - v, intersectionPoint - origin);
-		if (angle < 0)
-			angle *= -1;
+		lightToIntersect = intersectionPoint - v;
+		distanceToLight = lightToIntersect.normalize();
 
-		//if (angle > 0) {
-			resCol += material.Kd()*(1-angle)/MyLightPositions.size();
-		//}
+		vieuwToIntersect = intersectionPoint - origin;
+
+		halfwayVector = (lightToIntersect + vieuwToIntersect);
+		halfwayVector.normalize();
+
+		/*
+		std::cout << "Normal: " << TriangleNormal << std::endl 
+			<< " diffuse angle: " << Vec3Df::cosAngle(TriangleNormal, lightToIntersect) << std::endl 
+			<< " specular angle:  " << Vec3Df::cosAngle(TriangleNormal, halfwayVector) << std::endl;
+		*/
+		// Diffuse lighting
+		angle = Vec3Df::cosAngle(TriangleNormal, lightToIntersect);
+
+		if (angle < 0)
+			angle = -angle;
+		resCol += material.Kd()*angle*diffusePower / distanceToLight / MyLightPositions.size();
+		
+		angle = Vec3Df::cosAngle(TriangleNormal, halfwayVector);
+		if (angle < 0)
+			angle = -angle;
+		resCol += material.Kd()*std::pow(angle, specularHardness)/MyLightPositions.size();
 	}
 
 //WIP
@@ -204,7 +256,7 @@ void yourKeyboardFunc(char t, int x, int y, const Vec3Df & rayOrigin, const Vec3
 		testRay[0].destination = calculateIntersectionPoint(rayOrigin, rayDestination);
 
 		// make the ray the color of the intersection point (and slightly brighter)
-		testRay[0].color = performRayTracing(testRay[0].origin, testRay[0].destination, 0) + Vec3Df(0.25, 0.25, 0.25);
+		testRay[0].color = performRayTracing(testRay[0].origin, testRay[0].destination, 0);
 
 
 		for (Vec3Df v : MyLightPositions) {
@@ -214,10 +266,9 @@ void yourKeyboardFunc(char t, int x, int y, const Vec3Df & rayOrigin, const Vec3
 		std::cout << "Origin      " << testRay[0].origin << std::endl;
 		std::cout << "Destination " << testRay[0].destination << std::endl;
 		std::cout << "Color       " << testRay[0].color << std::endl;
-		
-		for (Vec3Df v : MyLightPositions) {
-			std::cout << "  Light " << Vec3Df::cosAngle(testRay[0].destination - v, testRay[0].destination - rayOrigin) << " from " << v << std::endl;
-		}
+		std::cout << "ColorR       " << testRay[0].color.p[0] << std::endl;
+		std::cout << "ColorG       " << testRay[0].color.p[1] << std::endl;
+		std::cout << "ColorB       " << testRay[0].color.p[2] << std::endl;
 		break;
 
 	case 'c':

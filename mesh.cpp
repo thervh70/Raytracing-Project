@@ -37,16 +37,18 @@ void Mesh::computeVertexNormals () {
         Vec3Df edge01 = vertices[triangles[i].v[1]].p -  vertices[triangles[i].v[0]].p;
         Vec3Df edge02 = vertices[triangles[i].v[2]].p -  vertices[triangles[i].v[0]].p;
         Vec3Df n = Vec3Df::crossProduct (edge01, edge02);
+
         n.normalize ();
+		triangles[i].normal = new Vec3Df(n.p[0], n.p[1], n.p[2]);
+
         for (unsigned int j = 0; j < 3; j++)
             vertices[triangles[i].v[j]].n += n;
     }
 
     //Normalize
     for (unsigned int i = 0; i < vertices.size (); i++)
-        vertices[i].n.normalize ();
+        vertices[i].n.normalize();
 }
-
 
 /************************************************************
  * draw
