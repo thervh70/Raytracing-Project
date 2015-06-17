@@ -103,6 +103,8 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 
 	if (!hit) return backgroundColor;
 
+	// Calculate intersection point with triangle from origin
+	Vec3Df intersectionPoint = origin + minT * (dest - origin);
 
 	// Normals of three vectors of triangle
 	Vec3Df
