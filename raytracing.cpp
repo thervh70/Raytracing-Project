@@ -158,11 +158,12 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 		angle = -Vec3Df::cosAngle(TriangleNormal, lightToIntersect);
 
 		if (angle > 0)
-			resCol += material.Kd()*angle*diffusePower / distanceToLight / MyLightPositions.size();
+			resCol += material.Kd()*angle*diffusePower / distanceToLight;
 		
-		angle = Vec3Df::cosAngle(TriangleNormal, halfwayVector);
+		angle = -Vec3Df::cosAngle(TriangleNormal, halfwayVector);
 		if (angle > 0)
-			resCol += material.Ks()*std::pow(angle, specularHardness)/MyLightPositions.size();
+			resCol += material.Ks()*std::pow(angle, specularHardness);
+			//resCol += Vec3Df(1.0f, 1.0f, 1.0f)*std::pow(angle, specularHardness);
 	}
 
 	if (material.illum() == 3) {
