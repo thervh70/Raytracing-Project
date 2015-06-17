@@ -94,32 +94,30 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 	// Calculate intersection point with triangle from origin
 	Vec3Df intersectionPoint = origin + minT * (dest - origin);
 	Vec3Df
-		a = MyMesh.vertices[MyMesh.triangles[triangleIndex].v[0]].n,
-		b = MyMesh.vertices[MyMesh.triangles[triangleIndex].v[1]].n,
-		c = MyMesh.vertices[MyMesh.triangles[triangleIndex].v[2]].n;
-
-	/*std::cout
-		<< "trianglenormal: " << (*MyMesh.triangles[triangleIndex].normal) << std::endl
-		<< "a-normal: " << a << std::endl
-		<< "b-normal: " << b << std::endl
-		<< "c-normal: " << c << std::endl
-		<< "a-b scalar: " << hitpair.res[0] << std::endl
-		<< "a-c scalar: " << hitpair.res[1] << std::endl
-		<< "a-b normal: " << a*(1 - hitpair.res[0]) + b*hitpair.res[0] << std::endl
-		<< "a-c normal: " << a*(1 - hitpair.res[1]) + c*hitpair.res[1] << std::endl
-		<< "bipolarinterp-normal: " << (a*(1 - hitpair.res[0]) + b*hitpair.res[0] + a*(1 - hitpair.res[1]) + c*hitpair.res[1]) / 2 << std::endl;
-	*/
-
+		a = MyMesh.vertices[MyMesh.triangles[triangleIndex].v[0]].p,
+		b = MyMesh.vertices[MyMesh.triangles[triangleIndex].v[1]].p,
+		c = MyMesh.vertices[MyMesh.triangles[triangleIndex].v[2]].p,
+		NormalA = MyMesh.vertices[MyMesh.triangles[triangleIndex].v[0]].n,
+		NormalB = MyMesh.vertices[MyMesh.triangles[triangleIndex].v[1]].n,
+		NormalC = MyMesh.vertices[MyMesh.triangles[triangleIndex].v[2]].n;
 
 	/**
-	Vertex normal biliniear interpolation shading mode
+	Barycentric vertex normal biliniear interpolation shading mode
 	**/
-	//Vec3Df TriangleNormal = (a*(1 - hitpair.res[0]) + b*hitpair.res[0] + a*(1 - hitpair.res[1]) + c*hitpair.res[1]);
-
-	/**
-	Triangle normal shading mode.
-	**/
-	Vec3Df TriangleNormal = (*MyMesh.triangles[triangleIndex].normal);
+	Vec3Df 
+		vp0 = b - a,
+		vp1 = c - a,
+		vp2 = intersectionPoint - a;
+	float d00 = Vec3Df::dotProduct(vp0, vp0);
+	float d01 = Vec3Df::dotProduct(vp0, vp1);
+	float d11 = Vec3Df::dotProduct(vp1, vp1);
+	float d20 = Vec3Df::dotProduct(vp2, vp0);
+	float d21 = Vec3Df::dotProduct(vp2, vp1);
+	float denom = d00 * d11 - d01 * d01;
+	float v = (d11 * d20 - d01 * d21) / denom;
+	float w = (d00 * d21 - d01 * d20) / denom;
+	float u = 1.0f - v - w;
+	Vec3Df TriangleNormal = NormalA*u + NormalB*v + NormalC*w;
 
 	// default lighting in all parts that even are in shadow everywhere.
 	resCol = material.Kd()*backgroundlighting;
@@ -142,16 +140,14 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 			<< " specular angle:  " << Vec3Df::cosAngle(TriangleNormal, halfwayVector) << std::endl;
 		*/
 		// Diffuse lighting
-		angle = Vec3Df::cosAngle(TriangleNormal, lightToIntersect);
+		angle = -Vec3Df::cosAngle(TriangleNormal, lightToIntersect);
 
-		if (angle < 0)
-			angle = -angle;
-		resCol += material.Kd()*angle*diffusePower / distanceToLight / MyLightPositions.size();
+		if (angle > 0)
+			resCol += material.Kd()*angle*diffusePower / distanceToLight / MyLightPositions.size();
 		
 		angle = Vec3Df::cosAngle(TriangleNormal, halfwayVector);
-		if (angle < 0)
-			angle = -angle;
-		resCol += material.Kd()*std::pow(angle, specularHardness)/MyLightPositions.size();
+		if (angle > 0)
+			resCol += material.Kd()*std::pow(angle, specularHardness)/MyLightPositions.size();
 	}
 
 //WIP Mathias
