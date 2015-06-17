@@ -5,6 +5,8 @@ Debug/*.obj
 Release/Raytraci*
 Release/*.obj
 
+Personal/*.*
+
 .vs/*
 
 config.h
