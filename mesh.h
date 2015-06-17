@@ -165,11 +165,16 @@ public:
         v[0] = t2.v[0];
         v[1] = t2.v[1];
         v[2] = t2.v[2];
-        t[0] = t2.v[0];
-        t[1] = t2.v[1];
-        t[2] = t2.v[2];
+        t[0] = t2.t[0];
+        t[1] = t2.t[1];
+        t[2] = t2.t[2];
         return (*this);
     }
+	inline bool operator== (const Triangle& t2)
+	{
+		return v[0] == t2.v[0] && v[1] == t2.v[1] && v[2] == t2.v[2];
+	}
+
 	//vertex position 
     unsigned int v[3];
 	//texture coordinate
