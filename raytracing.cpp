@@ -26,6 +26,7 @@ struct TestRay {
 };
 // All the rays in testRay will be drawn in yourDebugDraw().
 std::vector<TestRay> testRay;
+bool debug = false;
 
 // built KD tree
 std::vector<KDtreeCube> kdTree;
@@ -50,12 +51,6 @@ void init()
 
 	testRay.push_back(TestRay());
 
-	/* FOR TESTING ONLY ~ Maarten
-	Matrix33f m(Vec3Df(3, 4, 9), Vec3Df(5, 12, 8), Vec3Df(9, 3, 1));
-	std::cout << m << " det:" << m.det() << std::endl;
-	std::cout << "X = " << m.solve(Vec3Df(1, 2, 3)) << std::endl;
-	system("pause");*/
-
 	// FOR TESTING ONLY ~ Mathias
 	/*testRayOrigin = Vec3Df(2.0f, 5.0f, 1.0f);
 	testRayDestination = Vec3Df(8.0f, 7.0f, 4.0f);
@@ -65,10 +60,12 @@ void init()
 //return the color of your pixel.
 Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 {
-	Vec3Df resCol, point, normal, n, v0, v1, v2, vec1, vec2, dir = dest - origin;
+	if (k > 5) return Vec3Df();
+
+	Vec3Df resCol = Vec3Df(), hitPoint, dir = dest - origin;
 	Hitpair hitpair;
 	Triangle triangle;
-	float t, D, minT = std::numeric_limits<float>::max();
+	float t, minT = std::numeric_limits<float>::max();
 	int triangleIndex;
 	std::vector<Triangle> triangles = MyMesh.triangles;
 	Material material;
@@ -76,23 +73,38 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 
 	for (int i = 0; i < triangles.size(); ++i)
 	{
-
 		hitpair = checkHit(triangles[i], origin, dest, minT);
 
 		if (!hitpair.bHit)
 			continue;
 
 		hit = true;
+
 		minT = hitpair.res[2];
 		triangleIndex = i;
 		material = MyMesh.materials[MyMesh.triangleMaterials[i]];
 		triangle = triangles[i];
+		hitPoint = hitpair.hitPoint;
+
+		/**
+		Shadows
+		**/
+
+		//Find vectors from current triangle to all lights
+		//If dotproduct of surface normal with surface-light vector is < 0
+		//Object is shadowing itself so therefore no need to trace.
+
+		//Check whether this vector does hit any other objects (blocking light)
+		//If (hitObject) shadow from that light
+
 	}
+	if (debug)
+		testRay[k].destination = hit ? hitPoint : dest;
 
-	if (hit == false) return Vec3Df(0.0f, 0.0f, 0.0f);
+	if (!hit) return backgroundColor;
 
-	// Calculate intersection point with triangle from origin
-	Vec3Df intersectionPoint = origin + minT * (dest - origin);
+
+	// Normals of three vectors of triangle
 	Vec3Df
 		a = MyMesh.vertices[MyMesh.triangles[triangleIndex].v[0]].p,
 		b = MyMesh.vertices[MyMesh.triangles[triangleIndex].v[1]].p,
@@ -120,18 +132,19 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 	Vec3Df TriangleNormal = NormalA*u + NormalB*v + NormalC*w;
 
 	// default lighting in all parts that even are in shadow everywhere.
+	// Maarten - This should be Ka, ambient light, but our .mtl files have Ka = (0,0,0).
 	resCol = material.Kd()*backgroundlighting;
 
 	float angle, distanceToLight;
-	Vec3Df lightToIntersect, vieuwToIntersect, halfwayVector;
+	Vec3Df lightToIntersect, viewToIntersect, halfwayVector;
 
 	for (Vec3Df v : MyLightPositions) {
-		lightToIntersect = intersectionPoint - v;
+		lightToIntersect = hitPoint - v;
 		distanceToLight = lightToIntersect.normalize();
 
-		vieuwToIntersect = intersectionPoint - origin;
+		viewToIntersect = hitPoint - origin;
 
-		halfwayVector = (lightToIntersect + vieuwToIntersect);
+		halfwayVector = (lightToIntersect + viewToIntersect);
 		halfwayVector.normalize();
 
 		/*
@@ -147,28 +160,23 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 		
 		angle = Vec3Df::cosAngle(TriangleNormal, halfwayVector);
 		if (angle > 0)
-			resCol += material.Kd()*std::pow(angle, specularHardness)/MyLightPositions.size();
+			resCol += material.Ks()*std::pow(angle, specularHardness)/MyLightPositions.size();
 	}
 
-//WIP Mathias
-	if (material.has_illum()) {
-		int illum = material.illum();
-		if (illum == 3) {
-			// Vertices of the triangle
-			v0 = MyMesh.vertices[triangle.v[0]].p;
-			v1 = MyMesh.vertices[triangle.v[1]].p;
-			v2 = MyMesh.vertices[triangle.v[2]].p;
+	if (material.illum() == 3) {
 
-			// Vector from v2 to v0
-			vec1 = v0 - v2;
-			// Vector from v2 to v1
-			vec2 = v1 - v2;
+		// reflectdir = dir_of_ray - 2 * ray_projected_on_normal
+		const Vec3Df reflectdir = dir - 2 * Vec3Df::dotProduct(TriangleNormal, dir) * TriangleNormal,
+			newOrigin = hitPoint + 0.001 * reflectdir,
+			newDest = hitPoint + reflectdir;
 
-			n = Vec3Df::crossProduct(vec1, vec2);
-			point = dir - 2 * Vec3Df::dotProduct(n, dir) * n;
+		if (debug)
+			testRay.push_back(TestRay(newOrigin, Vec3Df(), Vec3Df()));
 
-			performRayTracing(hitpair.hitPoint, point, k++);
-		}
+		resCol = 0.5*resCol + 0.5*performRayTracing(newOrigin, newDest, ++k);
+
+		if (debug)
+			testRay[k].color = resCol;
 	}
 
 
@@ -255,6 +263,10 @@ void yourKeyboardFunc(char t, int x, int y, const Vec3Df & rayOrigin, const Vec3
 	switch (t)
 	{
 	case ' ':
+		debug = true;
+		testRay.clear();
+		testRay.push_back(TestRay());
+
 		//here, as an example, I use the ray to fill in the values for my upper global ray variable
 		//I use these variables in the debugDraw function to draw the corresponding ray.
 		//try it: Press a key, move the camera, see the ray that was launched as a line.
@@ -262,7 +274,7 @@ void yourKeyboardFunc(char t, int x, int y, const Vec3Df & rayOrigin, const Vec3
 
 		// calculate the coordinates where the ray will hit an object
 		// and use those coordinates as ray destination
-		testRay[0].destination = calculateIntersectionPoint(rayOrigin, rayDestination);
+		testRay[0].destination = rayDestination;
 
 		// make the ray the color of the intersection point (and slightly brighter)
 		testRay[0].color = performRayTracing(testRay[0].origin, testRay[0].destination, 0);
@@ -272,12 +284,14 @@ void yourKeyboardFunc(char t, int x, int y, const Vec3Df & rayOrigin, const Vec3
 			std::cout << "Light position: " << v << std::endl;
 		}
 
-		std::cout << "Origin      " << testRay[0].origin << std::endl;
-		std::cout << "Destination " << testRay[0].destination << std::endl;
-		std::cout << "Color       " << testRay[0].color << std::endl;
-		std::cout << "ColorR       " << testRay[0].color.p[0] << std::endl;
-		std::cout << "ColorG       " << testRay[0].color.p[1] << std::endl;
-		std::cout << "ColorB       " << testRay[0].color.p[2] << std::endl;
+		std::cout << std::endl;
+		for (TestRay r : testRay) {
+			std::cout << "Origin      " << r.origin << std::endl;
+			std::cout << "Destination " << r.destination << std::endl;
+			std::cout << "Color       " << r.color << std::endl << std::endl;
+		}
+		
+		debug = false;
 		break;
 
 	case 'c':
@@ -291,7 +305,9 @@ void yourKeyboardFunc(char t, int x, int y, const Vec3Df & rayOrigin, const Vec3
 
 // Return the intersection point of the ray with the object in the scene
 // return the rayDest if no object was hit
-inline Vec3Df calculateIntersectionPoint(const Vec3Df & rayOrigin, const Vec3Df & rayDest)
+// Maarten - I think we don't need this function anymore, as this was used for debug, 
+// but the debug stuff has been moved into performRayTracing via bool debug
+/*inline Vec3Df calculateIntersectionPoint(const Vec3Df & rayOrigin, const Vec3Df & rayDest)
 {
 	// Get the triangles
 	std::vector<Triangle> triangles = MyMesh.triangles;
@@ -318,7 +334,7 @@ inline Vec3Df calculateIntersectionPoint(const Vec3Df & rayOrigin, const Vec3Df 
 
 	// Return the intersecton point with the triangle
 	return rayOrigin + minT * (rayDest - rayOrigin);
-}
+}*/
 
 // check if the triangle is hit by the ray from origin to dest and closer to the origin than minT
 inline Hitpair checkHit(const Triangle & triangle, const Vec3Df & origin, const Vec3Df & dest, float minT)
