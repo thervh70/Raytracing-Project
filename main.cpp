@@ -6,6 +6,7 @@
 #include <math.h>
 #include <ctime>
 #include <thread>
+#include <algorithm> //random_shuffle
 #include <assert.h>
 #include "config.h"
 #include "raytracing.h"
@@ -345,11 +346,18 @@ void RayTracer::threadmethod(int threadID) {
 		y = ++tcurrent[threadID];
 		if (tcurrent[threadID] >= tend[threadID]) {
 			done = true;
-			for (int i = 0; i < Thread_Amount; ++i) {
-				if (done && tcurrent[i]+1 < tend[i] && !linedone[tend[i]-1]) {
-					linedone[tend[i]-1] = true;
-					y = tend[i]-1;
-					--tend[i];
+
+			std::vector<int> randomlist;
+			for (int i = 0; i < Thread_Amount; ++i)
+				randomlist.push_back(i); // fill list with threadIDs
+			std::random_shuffle(randomlist.begin(), randomlist.end());
+
+			for (int i = 0; i < randomlist.size(); ++i) {
+				int tid = randomlist[i];
+				if (done && tcurrent[tid]+1 < tend[tid] && !linedone[tend[tid]-1]) {
+					linedone[tend[tid]-1] = true;
+					y = tend[tid]-1;
+					--tend[tid];
 					done = false;
 				}
 			}
