@@ -72,17 +72,6 @@ void init()
 //return the color of your pixel.
 Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 {
-/*<<<<<<< HEAD
-
-//	Vec3Df origin = Vec3Df(0.274594f, 1.89004f, 3.5032f);
-//	Vec3Df dest = Vec3Df(0.526746f, 0.308055f, 0.47311f);
-
-	Vec3Df resCol, point, n, v0, v1, v2, vec1, vec2, dir = dest - origin;
-	Hitpair hitpair;
-	Triangle triangle;
-	float t, D, minT = std::numeric_limits<float>::max();
-	std::vector<Triangle> triangles;// = MyMesh.triangles;
-=======*/
 	if (k > 5) return Vec3Df();
 
 	Vec3Df resCol = Vec3Df(), hitPoint, dir = dest - origin;
@@ -112,14 +101,6 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 
 	while (true)
 	{
-/*=======
-		hitpair = checkHit(triangles[i], origin, dest, minT);
->>>>>>> origin/master*/
-
-		// Check all triangles of the parent's which you havem't checked yet and
-		// of the current node
-
-//<<<<<<< HEAD
 		// Create an iterator for the current and old parent lists
 		std::vector<AccelTreeNode*> curPar = currNode.parentList;
 		int n = 0;
@@ -172,15 +153,6 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 			material = MyMesh.materials[MyMesh.triangleMaterials[i]];
 			break;
 		}
-/*=======
-		hit = true;
-
-		minT = hitpair.res[2];
-		triangleIndex = i;
-		material = MyMesh.materials[MyMesh.triangleMaterials[i]];
-		triangle = triangles[i];
-		hitPoint = hitpair.hitPoint;
->>>>>>> origin/master*/
 	}
 	if (debug)
 		testRay[k].destination = hit ? hitPoint : dest;
