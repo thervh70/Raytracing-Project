@@ -39,7 +39,7 @@ void Mesh::computeVertexNormals () {
         Vec3Df n = Vec3Df::crossProduct (edge01, edge02);
 
         n.normalize ();
-		triangles[i].normal = new Vec3Df(n.p[0], n.p[1], n.p[2]);
+		//triangles[i].normal = new Vec3Df(n.p[0], n.p[1], n.p[2]);
 
         for (unsigned int j = 0; j < 3; j++)
             vertices[triangles[i].v[j]].n += n;
@@ -102,7 +102,8 @@ bool Mesh::loadMesh(const char * filename, bool randomizeTriangulation)
 	texcoords.clear();
 	
     std::vector<int> vhandles;
-    std::vector<int> texhandles;
+	std::vector<int> texhandles;
+	std::vector<int> nhandles;
 
     if (randomizeTriangulation)
         srand(0);
@@ -213,7 +214,10 @@ bool Mesh::loadMesh(const char * filename, bool randomizeTriangulation)
         // normal
         else if (strncmp(s, "vn ", 3) == 0)
         {
-            //are recalculated
+            //are recalculated, but we still store them
+
+			sscanf(s, "vn %f %f %f", &x, &y, &z);
+			normals.push_back(Vec3Df(x, y, z));
         }
         // face
         else if (strncmp(s, "f ", 2) == 0)
@@ -224,6 +228,7 @@ bool Mesh::loadMesh(const char * filename, bool randomizeTriangulation)
 
             vhandles.clear();
 			texhandles.clear();
+			nhandles.clear();
 
             while (*p1 == ' ') ++p1; // skip white-spaces
 
@@ -276,6 +281,8 @@ bool Mesh::loadMesh(const char * filename, bool randomizeTriangulation)
                         //assert(!vhandles.empty());
                         //assert((unsigned int)(atoi(p0)-1) < normals.size());
                         //_bi.set_normal(vhandles.back(), normals[atoi(p0)-1]);
+                            int tmp = atoi(p0)-1;
+							nhandles.push_back(tmp);
                         break;
                     }
                 }
@@ -304,23 +311,28 @@ bool Mesh::loadMesh(const char * filename, bool randomizeTriangulation)
                     const int v1 = (k+i+1)%vhandles.size();
                     const int v2 = (k+i+2)%vhandles.size();
 
-                    const int t0 = (k+0)%vhandles.size();
-                    const int t1 = (k+i+1)%vhandles.size();
-                    const int t2 = (k+i+2)%vhandles.size();
-
                     const int m  = (materialIndex.find(matname))->second;
 
-					triangles.push_back(
-                        Triangle(	vhandles[v0], texhandles[t0],
-                                    vhandles[v1], texhandles[t1],
-                                    vhandles[v2], texhandles[t2]));
+					Triangle t =
+						Triangle(vhandles[v0], texhandles[v0], nhandles[v0],
+								vhandles[v1], texhandles[v1], nhandles[v1],
+								vhandles[v2], texhandles[v2], nhandles[v2]);
+					t.normal = normals[nhandles[v0]] + normals[nhandles[v1]] + normals[nhandles[v2]];
+					t.normal.normalize();
+					triangles.push_back(t);
                     triangleMaterials.push_back(m);
 				}
 			}
 			else if (vhandles.size()==3)
 			{
-				triangles.push_back(Triangle(vhandles[0], texhandles[0], vhandles[1], texhandles[1], vhandles[2], texhandles[2]));
+				triangles.push_back(
+						Triangle(	vhandles[0], texhandles[0], nhandles[0],
+									vhandles[1], texhandles[1], nhandles[1],
+									vhandles[2], texhandles[2], nhandles[2]));
 				triangleMaterials.push_back((materialIndex.find(matname))->second);
+				triangles[triangles.size() - 1].normal =
+					normals[nhandles[0]] + normals[nhandles[1]] + normals[nhandles[2]];
+				triangles[triangles.size() - 1].normal.normalize();
 			}
 			else
 			{

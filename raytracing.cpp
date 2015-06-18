@@ -131,7 +131,7 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 	float v = (d11 * d20 - d01 * d21) / denom;
 	float w = (d00 * d21 - d01 * d20) / denom;
 	float u = 1.0f - v - w;
-	Vec3Df TriangleNormal = NormalA*u + NormalB*v + NormalC*w;
+	Vec3Df InterpolatedNormal = NormalA*u + NormalB*v + NormalC*w;
 
 	// default lighting in all parts that even are in shadow everywhere.
 	// Maarten - This should be Ka, ambient light, but our .mtl files have Ka = (0,0,0).
@@ -155,12 +155,12 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 			<< " specular angle:  " << Vec3Df::cosAngle(TriangleNormal, halfwayVector) << std::endl;
 		*/
 		// Diffuse lighting
-		angle = -Vec3Df::cosAngle(TriangleNormal, lightToIntersect);
+		angle = -Vec3Df::cosAngle(InterpolatedNormal, lightToIntersect);
 
 		if (angle > 0)
 			resCol += material.Kd()*angle*diffusePower / distanceToLight;
 		
-		angle = -Vec3Df::cosAngle(TriangleNormal, halfwayVector);
+		angle = -Vec3Df::cosAngle(InterpolatedNormal, halfwayVector);
 		if (angle > 0)
 			resCol += material.Ks()*std::pow(angle, specularHardness);
 			//resCol += Vec3Df(1.0f, 1.0f, 1.0f)*std::pow(angle, specularHardness);
@@ -169,7 +169,7 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 	if (material.illum() == 3) {
 
 		// reflectdir = dir_of_ray - 2 * ray_projected_on_normal
-		const Vec3Df reflectdir = dir - 2 * Vec3Df::dotProduct(TriangleNormal, dir) * TriangleNormal,
+		const Vec3Df reflectdir = dir - 2 * Vec3Df::dotProduct(InterpolatedNormal, dir) * InterpolatedNormal,
 			newOrigin = hitPoint + 0.001f * reflectdir,
 			newDest = hitPoint + reflectdir;
 

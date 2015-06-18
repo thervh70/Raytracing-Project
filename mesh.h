@@ -138,7 +138,6 @@ class Material
 //and 3 indices to refer to texture coordinates (optional)
  class Triangle {
 public:
-	Vec3Df* normal = nullptr;
     inline Triangle () {
         v[0] = v[1] = v[2] = 0;
     }
@@ -147,45 +146,60 @@ public:
         v[1] = t2.v[1];
         v[2] = t2.v[2];
 
-        t[0] = t2.t[0];
-        t[1] = t2.t[1];
-        t[2] = t2.t[2];
+		t[0] = t2.t[0];
+		t[1] = t2.t[1];
+		t[2] = t2.t[2];
 
-    }
-    inline Triangle (unsigned int v0, unsigned int t0, unsigned int v1, unsigned int t1, unsigned int v2, unsigned int t2) {
-        v[0] = v0;
-        v[1] = v1;
-        v[2] = v2;
+		n[0] = t2.n[0];
+		n[1] = t2.n[1];
+		n[2] = t2.n[2];
 
-        t[0] = t0;
-        t[1] = t1;
-        t[2] = t2;
+		normal = t2.normal;
     }
-	/*
-	inline Vec3Df getNormal() {
-		if (normal == nullptr) {
-			normal = &Vec3Df::crossProduct(
-				MyMesh.vertices[v[1]].p - MyMesh.vertices[v[0]].p, 
-				MyMesh.vertices[v[2]].p - MyMesh.vertices[v[0]].p
-			);
-		}
-		return *normal;
+	inline Triangle(unsigned int v0, unsigned int t0, unsigned int v1, unsigned int t1, unsigned int v2, unsigned int t2) {
+		v[0] = v0;
+		v[1] = v1;
+		v[2] = v2;
+
+		t[0] = t0;
+		t[1] = t1;
+		t[2] = t2;
 	}
-	*/
+	inline Triangle(unsigned int v0, unsigned int t0, unsigned int n0, unsigned int v1, unsigned int t1, unsigned int n1, unsigned int v2, unsigned int t2, unsigned int n2) {
+		v[0] = v0;
+		v[1] = v1;
+		v[2] = v2;
+
+		t[0] = t0;
+		t[1] = t1;
+		t[2] = t2;
+
+		n[0] = n0;
+		n[1] = n1;
+		n[2] = n2;
+	}
+	
     inline virtual ~Triangle () {}
     inline Triangle & operator= (const Triangle & t2) {
         v[0] = t2.v[0];
         v[1] = t2.v[1];
         v[2] = t2.v[2];
-        t[0] = t2.v[0];
-        t[1] = t2.v[1];
-        t[2] = t2.v[2];
-        return (*this);
+		t[0] = t2.t[0];
+		t[1] = t2.t[1];
+		t[2] = t2.t[2];
+		n[0] = t2.n[0];
+		n[1] = t2.n[1];
+		n[2] = t2.n[2];
+		normal = t2.normal;
+		return (*this);
     }
-	//vertex position 
-    unsigned int v[3];
+	Vec3Df normal;
+	//vertex indices
+	unsigned int v[3];
 	//texture coordinate
-    unsigned int t[3];
+	unsigned int t[3];
+	//normal indices
+	unsigned int n[3];
 };
 
 /************************************************************
@@ -207,8 +221,11 @@ public:
 	//in the current version, if you use textures, then you have to use texture coords everywhere
 	//for convenience, Vec3Df is used, although only 2D tex coordinates are stored (x,y entry of the Vec3Df).
 	std::vector<Vec3Df> texcoords;
+	//normals are the normals of the faces that can be used
+	std::vector<Vec3Df> normals;
+
 	//Triangles are the indices of the vertices involved in a triangle.
-	//A triangle, thus, contains a triplet of values corresponding to the 3 vertices of a triangle. 
+	//A triangle, thus, contains a triplet of values corresponding to the 3 vertices of a triangle.
     std::vector<Triangle> triangles;
 	//These are the material properties
 	//each triangle (!), NOT (!) each vertex, has a material. 
