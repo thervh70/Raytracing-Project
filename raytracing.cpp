@@ -303,6 +303,12 @@ void yourKeyboardFunc(char t, int x, int y, const Vec3Df & rayOrigin, const Vec3
 		MyLightPositions.push_back(MyCameraPosition);
 		std::cout << "Cleared light sources " << std::endl;
 		break;
+
+	case 'o':
+		std::cout << "Opening result.bmp";
+		int res = system("result.bmp");
+		std::cout << " exited with code " << res << std::endl;
+		break;
 	}
 }
 
