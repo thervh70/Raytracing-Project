@@ -43,17 +43,25 @@ public:
 		for (int i = 0; i < 16; ++i)
 			pixelsdone[i] = 0;
 
+		for (int i = 0; i < WindowSize_Y; ++i)
+			linedone[i] = false;
+
 		produceRay(0, 0, &origin00, &dest00);
 		produceRay(0, WindowSize_Y - 1, &origin01, &dest01);
 		produceRay(WindowSize_X - 1, 0, &origin10, &dest10);
 		produceRay(WindowSize_X - 1, WindowSize_Y - 1, &origin11, &dest11);
 	};
 	static void produceRay(int x_I, int y_I, Vec3Df * origin, Vec3Df * dest);
-	void threadmethod(int threadID, unsigned int ystart, unsigned int yend);
+	void threadmethod(int threadID);
 	double doDaRayTracingShizz();
 private:
 	clock_t begin;
 	int pixelsdone[16];
+	std::thread t[16];
+	unsigned int tstart[16];
+	unsigned int tend[16];
+	unsigned int tcurrent[16];
+	bool linedone[3000];
 
 	//Setup an image with the size of the current image.
 	Image result;
@@ -259,15 +267,20 @@ double RayTracer::doDaRayTracingShizz() {
 	begin = clock();
 
 	unsigned n = Thread_Amount;
-	n = (n <  1 ?  1 : n); //not less than  1, duh. xD
+	n = (n < 1 ? 1 : n); //not less than  1, duh. xD
 	n = (n > 16 ? 16 : n); //not more than 16, as thread array is hardcoded length 16
 	std::thread t[16];
 	printf("There are %d threads", n);
 	float linesperthread = float(WindowSize_Y) / float(n);
 
-	for (int j = 0; j < n; ++j)
-		t[j] = std::thread(&RayTracer::threadmethod, this, j, j * linesperthread, (j+1) * linesperthread);
-		
+	for (int j = 0; j < n; ++j) {
+		tcurrent[j] = tstart[j] = j * linesperthread;
+		tend[j] = (j + 1) * linesperthread;
+		t[j] = std::thread(&RayTracer::threadmethod, this, j);
+	}
+	// make sure the last thread won't get out of bounds
+	tend[n - 1] = WindowSize_Y;
+
 	int currpx;
 	int totalsize = WindowSize_X * WindowSize_Y;
 	do {
@@ -300,12 +313,13 @@ double RayTracer::doDaRayTracingShizz() {
 	return elapsed_secs;
 }
 
-void RayTracer::threadmethod(int threadID, unsigned int ystart, unsigned int yend) {
-	for (unsigned int y = ystart; y < yend; ++y)
+void RayTracer::threadmethod(int threadID) {
+	bool done = false;
+	unsigned y = tcurrent[threadID];
+	while (!done)
 	{
-		if (y >= WindowSize_Y)
-			break;
-
+		linedone[y] = true;
+		// Perform raytracing on the line
 		for (unsigned int x = 0; x < WindowSize_X; ++x)
 		{
 			Vec3Df origin, dest;
@@ -326,6 +340,20 @@ void RayTracer::threadmethod(int threadID, unsigned int ystart, unsigned int yen
 			++pixelsdone[threadID];
 		}
 		result.writeImageBMP("result.bmp", 0, y, result._width, 1);
+
+		// search for next line to do
+		y = ++tcurrent[threadID];
+		if (tcurrent[threadID] >= tend[threadID]) {
+			done = true;
+			for (int i = 0; i < Thread_Amount; ++i) {
+				if (done && tcurrent[i]+1 < tend[i] && !linedone[tend[i]-1]) {
+					linedone[tend[i]-1] = true;
+					y = tend[i]-1;
+					--tend[i];
+					done = false;
+				}
+			}
+		}
 	}
 	printf("   %d done", threadID + 1);
 }
