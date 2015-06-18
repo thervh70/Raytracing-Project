@@ -76,6 +76,10 @@ void init()
 //return the color of your pixel.
 Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 {
+
+//	Vec3Df origin = Vec3Df(0.274594f, 1.89004f, 3.5032f);
+//	Vec3Df dest = Vec3Df(0.526746f, 0.308055f, 0.47311f);
+
 	Vec3Df resCol, point, n, v0, v1, v2, vec1, vec2, dir = dest - origin;
 	Hitpair hitpair;
 	Triangle triangle;
@@ -89,6 +93,14 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 	Vec3Df currentPoint = origin, currentDestination = dest;
 	std::vector<AccelTreeNode*> oldParentList;
 	bool gotHit = false;
+
+	// If current point is outside of the root (camera is far away), then put it inside the root.
+/*	if (currentPoint.p[0] < treeRoot.xStart || currentPoint.p[0] > treeRoot.xEnd ||
+		currentPoint.p[1] < treeRoot.yStart || currentPoint.p[1] > treeRoot.yEnd ||
+		currentPoint.p[2] < treeRoot.zStart || currentPoint.p[2] > treeRoot.zEnd)
+	{
+		projectOriginOnRoot(currentPoint, currentDestination);
+	}*/
 
 	while (true)
 	{
@@ -131,14 +143,7 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 
 		oldParentList = currNode.parentList;
 		currNode = findNextNode(currNode, currentPoint, currentDestination);
-
 		
-/*		if(currentPoint.p[0] < treeRoot.xStart ||
-			currentPoint.p[0] > treeRoot.xEnd ||
-			currentPoint.p[1] < treeRoot.yStart ||
-			currentPoint.p[1] > treeRoot.yEnd ||
-			currentPoint.p[2] < treeRoot.zStart ||
-			currentPoint.p[2] > treeRoot.zEnd)*/
 		if (currNode.parentList.size() == 1)
 			//outside of root
 			break;
@@ -153,7 +158,6 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 			break;
 		}
 	}
-	
 
 	/**
 	Work In progress, Youri Arkesteijn, trying to get this to work on the same way as it does in scene previeuw with spacebar.
@@ -276,7 +280,7 @@ void yourKeyboardFunc(char t, int x, int y, const Vec3Df & rayOrigin, const Vec3
 {
 	AccelTreeNode test;
 	AccelTreeNode testNode;
-	Vec3Df position = Vec3Df(1.2, 1.2, 1.2), destination = Vec3Df(2,2,2);
+	Vec3Df position = Vec3Df(0.274594f, 1.89004f, 3.5032f), destination = Vec3Df(0.526746f,0.308055f,0.47311f);
 	switch (t)
 	{
 	case ' ':
@@ -291,75 +295,8 @@ void yourKeyboardFunc(char t, int x, int y, const Vec3Df & rayOrigin, const Vec3
 
 		// make the ray the color of the intersection point (and slightly brighter)
 		testRay[0].color = performRayTracing(testRay[0].origin, testRay[0].destination, 0) + Vec3Df(0.25, 0.25, 0.25);
-/*
-		std::cout << std::endl;
-		std::cout << std::endl;
-		std::cout << std::endl;		
 
-		std::cout << "Tree: " << std::endl;
-		std::cout << "kdTree location: " << &treeRoot << std::endl;
-		std::cout << "Parent list size: " << treeRoot.parentList.size() << std::endl;
-		std::cout << "Parent list [0]: " << treeRoot.parentList[0] << std::endl;
-		std::cout << "Left child location: " << treeRoot.leftChild << std::endl;
-		std::cout << "Right child location: " << treeRoot.rightChild << std::endl;
-		std::cout << "Triangle list size: " << treeRoot.triangles.size() << std::endl;
-		std::cout << "xStart: " << treeRoot.xStart << std::endl;
-		std::cout << "yStart: " << treeRoot.yStart << std::endl;
-		std::cout << "zStart: " << treeRoot.zStart << std::endl;
-		std::cout << "xEnd: " << treeRoot.xEnd << std::endl;
-		std::cout << "yEnd: " << treeRoot.yEnd << std::endl;
-		std::cout << "zEnd: " << treeRoot.zEnd << std::endl;
-
-		std::cout << std::endl;
-		std::cout << std::endl;
-		std::cout << std::endl;
-
-		std::cout << "Tree -> Left: " << std::endl;
-		std::cout << "Parent list size: " << (*treeRoot.leftChild).parentList.size() << std::endl;
-		std::cout << "Parent list [0]: " << (*treeRoot.leftChild).parentList[0] << std::endl;
-		std::cout << "Parent list [1]: " << (*treeRoot.leftChild).parentList[1] << std::endl;
-		std::cout << "Triangle list size: " << (*treeRoot.leftChild).triangles.size() << std::endl;
-		std::cout << "xStart: " << (*treeRoot.leftChild).xStart << std::endl;
-		std::cout << "yStart: " << (*treeRoot.leftChild).yStart << std::endl;
-		std::cout << "zStart: " << (*treeRoot.leftChild).zStart << std::endl;
-		std::cout << "xEnd: " << (*treeRoot.leftChild).xEnd << std::endl;
-		std::cout << "yEnd: " << (*treeRoot.leftChild).yEnd << std::endl;
-		std::cout << "zEnd: " << (*treeRoot.leftChild).zEnd << std::endl;
-		std::cout << "left child: " << (*treeRoot.leftChild).leftChild << std::endl;
-		std::cout << "right child: " << (*treeRoot.leftChild).rightChild << std::endl;
-
-		std::cout << std::endl;
-		std::cout << std::endl;
-		std::cout << std::endl;
-
-		std::cout << "Tree -> Right: " << std::endl;
-		std::cout << "Parent list size: " << (*treeRoot.rightChild).parentList.size() << std::endl;
-		std::cout << "Parent list [0]: " << (*treeRoot.rightChild).parentList[0] << std::endl;
-		std::cout << "Parent list [1]: " << (*treeRoot.rightChild).parentList[1] << std::endl;
-		std::cout << "Triangle list size: " << (*treeRoot.rightChild).triangles.size() << std::endl;
-		std::cout << "xStart: " << (*treeRoot.rightChild).xStart << std::endl;
-		std::cout << "yStart: " << (*treeRoot.rightChild).yStart << std::endl;
-		std::cout << "zStart: " << (*treeRoot.rightChild).zStart << std::endl;
-		std::cout << "xEnd: " << (*treeRoot.rightChild).xEnd << std::endl;
-		std::cout << "yEnd: " << (*treeRoot.rightChild).yEnd << std::endl;
-		std::cout << "zEnd: " << (*treeRoot.rightChild).zEnd << std::endl;
-		std::cout << "left child: " << (*treeRoot.rightChild).leftChild << std::endl;
-		std::cout << "right child: " << (*treeRoot.rightChild).rightChild << std::endl;
-		*/
-		std::cout << std::endl;
-		std::cout << std::endl;
-		std::cout << std::endl;
-
-		std::cout << "Tree depth: " << treeDepth << std::endl;
-		std::cout << "Amount of nodes: " << treeNodes << std::endl;
-
-
-		testNode = findChildNode(treeRoot, 0, Vec3Df(1.2, 1.2, 1.2));
-		test = findNextNode(testNode, position, destination); //findChildNode(treeRoot, 0, position);
-
-		std::cout << std::endl;
-		std::cout << std::endl;
-		std::cout << std::endl;
+		std::cout << "Test ray trace:" << std::endl;
 
 		for (Vec3Df v : MyLightPositions) {
 			std::cout << "Light position: " << v << std::endl;
@@ -459,6 +396,7 @@ inline Hitpair checkHit(const Triangle & triangle, const Vec3Df & origin, const 
 // Build a KD tree and store the planes with the triangles in a vector of vectors
 void buildKDtree()
 {
+	std::cout << std::endl;
 	std::cout << "Building tree ..." << std::endl;
 
 	float xMin, xMax, yMin, yMax, zMin, zMax;
@@ -497,8 +435,9 @@ void buildKDtree()
 		++it;
 	}
 
-	// Assign the found values to the kd tree
-	treeRoot = AccelTreeNode(MyMesh.triangles, xMin, xMax, yMin, yMax, zMin, zMax);
+	// Assign the found values to the kd tree (with a small margin)
+	// !!! IMPORTANT: NEED BETTER SOLUTION THAN INCREASING MARGIN TO ALLOW CAMERA TO BE OUTSIDE OF THE ROOT !!!
+	treeRoot = AccelTreeNode(MyMesh.triangles, xMin - 5.1f, xMax + 5.1f, yMin - 5.1f, yMax + 5.1f, zMin - 5.1f, zMax + 5.1f);
 
 	// Add the root node to it's own parent list.
 	treeRoot.parentList.push_back(&treeRoot);
@@ -506,6 +445,9 @@ void buildKDtree()
 	// Split the main node into smaller nodes
 	splitSpaces(treeRoot, 0);
 	std::cout << "... done building tree" << std::endl;
+	std::cout << "Tree depth: " << treeDepth << std::endl;
+	std::cout << "Amount of nodes: " << treeNodes << std::endl;
+	std::cout << std::endl;
 }
 
 void splitSpaces(AccelTreeNode& tree, int axis) {
@@ -513,12 +455,11 @@ void splitSpaces(AccelTreeNode& tree, int axis) {
 	if (axis > treeDepth)
 		++treeDepth;
 
-//	std::cout << "Start split" << std::endl;
-	std::cout << "Node triangle size: " << tree.triangles.size() << std::endl;
+
 	// split the KDtreeCube into subspaces and recursevily recall on those subspaces
 
-	// stop if there are 40 or less triangles in the current level (!!! 40 is randomly chosen !!!)
-	if (tree.triangles.size() < 41)
+	// stop if there are 10 or less triangles in the current level (!!! 10 is randomly chosen !!!)
+	if (tree.triangles.size() < 11)
 	{
 //		std::cout << "return: too few triangles left: " << &tree << std::endl;
 		tree.leftChild = nullptr;
@@ -527,12 +468,11 @@ void splitSpaces(AccelTreeNode& tree, int axis) {
 	}
 
 
-	// stop if subspace axis which is being divided is smaller than 0.05 (!!! 0.05 is randomly chosen !!!)
-	if ((axis % 3 == 0 && tree.xEnd - tree.xStart < 0.05) ||
-		(axis % 3 == 1 && tree.yEnd - tree.yStart < 0.05) ||
-		(tree.zEnd - tree.zStart < 0.05))
+	// stop if subspace axis which is being divided is smaller than 0.01 (!!! 0.01 is randomly chosen !!!)
+	if ((axis % 3 == 0 && tree.xEnd - tree.xStart < 0.01) ||
+		(axis % 3 == 1 && tree.yEnd - tree.yStart < 0.01) ||
+		(tree.zEnd - tree.zStart < 0.01))
 	{
-//		std::cout << "return: too small subspace: " << &tree << std::endl;
 		tree.leftChild = nullptr;
 		tree.rightChild = nullptr;
 		return;
@@ -602,8 +542,6 @@ void splitSpaces(AccelTreeNode& tree, int axis) {
 	++treeNodes;
 	splitSpaces((*right), axis + 1);
 	++treeNodes;
-
-//	std::cout << "End split" << std::endl;
 }
 
 
@@ -621,7 +559,7 @@ inline AccelTreeNode findChildNode(const AccelTreeNode &parent, int axis, const 
 		// check x-axis
 		if ((*parent.leftChild).xEnd > position.p[0])
 			return findChildNode((*parent.leftChild), axis + 1, position);
-		else //if ((*parent.rightChild).xEnd < position.p[0])
+		else
 			return findChildNode((*parent.rightChild), axis + 1, position);
 	}
 	else if (axis % 3 == 1)
@@ -629,19 +567,17 @@ inline AccelTreeNode findChildNode(const AccelTreeNode &parent, int axis, const 
 		// check y-axis
 		if ((*parent.leftChild).yEnd > position.p[1])
 			return findChildNode((*parent.leftChild), axis + 1, position);
-		else //if((*parent.rightChild).yEnd < position.p[1])
+		else
 			return findChildNode((*parent.rightChild), axis + 1, position);
 	}
-	else //if (axis % 3 == 2)
+	else
 	{
 		// check z-axis
 		if ((*parent.leftChild).zEnd > position.p[2])
 			return findChildNode((*parent.leftChild), axis + 1, position);
-		else //if ((*parent.rightChild).zEnd < position.p[2])
+		else
 			return findChildNode((*parent.rightChild), axis + 1, position);
 	}
-	
-	//return parent;
 }
 
 
@@ -652,7 +588,7 @@ inline AccelTreeNode findNextNode(const AccelTreeNode &curN, Vec3Df &position, V
 
 	// avoid floating point error
 	// !!! NEEDS BETTER SOLUTION !!!
-	hitCube += (destination / 1000.0f);
+	hitCube += (destination / 1000.f);
 
 	destination += hitCube - position;
 	position = hitCube;
@@ -668,7 +604,7 @@ inline AccelTreeNode findNextNode(const AccelTreeNode &curN, Vec3Df &position, V
 	return findChildNode(treeRoot, 0, hitCube);
 }
 
-
+// Find the point where the ray hits the outside of the current node
 inline Vec3Df findNodeBoxHitPoint(const AccelTreeNode &curN, const Vec3Df &position, const Vec3Df &destination)
 {
 	float i, tempx, tempy, tempz;
@@ -678,7 +614,7 @@ inline Vec3Df findNodeBoxHitPoint(const AccelTreeNode &curN, const Vec3Df &posit
 		// Check the y-z faces of the space
 		tempx = curN.xStart - position.p[0];
 		i = tempx / (destination.p[0] - position.p[0]);
-		if (i > 0) 
+		if (destination.p[0] - position.p[0] < 0)
 		{
 			tempy = i * (destination.p[1] - position.p[1]) + position.p[1];
 			tempz = i * (destination.p[2] - position.p[2]) + position.p[2];
@@ -706,7 +642,7 @@ inline Vec3Df findNodeBoxHitPoint(const AccelTreeNode &curN, const Vec3Df &posit
 		// Check the x-z faces of the space
 		tempy = curN.yStart - position.p[1];
 		i = tempy / (destination.p[1] - position.p[1]);
-		if (i > 0)
+		if (destination.p[1] - position.p[1] < 0)
 		{
 			tempx = i * (destination.p[0] - position.p[0]) + position.p[0];
 			tempz = i * (destination.p[2] - position.p[2]) + position.p[2];
@@ -730,9 +666,9 @@ inline Vec3Df findNodeBoxHitPoint(const AccelTreeNode &curN, const Vec3Df &posit
 	}
 
 	// Check the x-y faces of the space
-	tempz = curN.yStart - position.p[2];
+	tempz = curN.zStart - position.p[2];
 	i = tempz / (destination.p[2] - position.p[2]);
-	if (i > 0)
+	if (destination.p[2] - position.p[2] < 0)
 	{
 		tempx = i * (destination.p[0] - position.p[0]) + position.p[0];
 		tempy = i * (destination.p[1] - position.p[1]) + position.p[1];
@@ -744,7 +680,7 @@ inline Vec3Df findNodeBoxHitPoint(const AccelTreeNode &curN, const Vec3Df &posit
 	else
 	{
 		// check other x-y face
-		tempz = curN.yEnd - position.p[2];
+		tempz = curN.zEnd - position.p[2];
 		i = tempz / (destination.p[2] - position.p[2]);
 		tempx = i * (destination.p[0] - position.p[0]) + position.p[0];
 		tempy = i * (destination.p[1] - position.p[1]) + position.p[1];
@@ -767,4 +703,113 @@ inline bool contains(const std::vector<AccelTreeNode*> &vec, const AccelTreeNode
 			return true;
 		}
 	return false;
+}
+
+inline void projectOriginOnRoot(Vec3Df &origin, Vec3Df &dest)
+{
+	Vec3Df hitRoot = calculateProjectionOnRoot(origin, dest);
+
+	// avoid floating point error
+	// !!! NEEDS BETTER SOLUTION !!!
+	hitRoot += (dest / 1000.f);
+
+	dest += hitRoot - origin;
+	origin = hitRoot;
+}
+
+// If the camera is outside of the root, use this to move the origin inside of the root.
+// this function looks a lot like the findNodeBoxHitPoint function
+inline Vec3Df calculateProjectionOnRoot(Vec3Df &origin, Vec3Df &dest)
+{
+	float i, tempx, tempy, tempz;
+
+	// check y-z faces of the root
+	if (origin.p[0] != dest.p[0] && !(origin.p[0] > treeRoot.xStart && origin.p[0] < treeRoot.xEnd))
+	{
+		if (std::abs(treeRoot.xStart - origin.p[0]) < std::abs(treeRoot.xEnd - origin.p[0]))
+		{
+			// closer to xStart
+			tempx = treeRoot.xStart - origin.p[0];
+			i = tempx / (dest.p[0] - origin.p[0]);
+
+			tempy = i * (dest.p[1] - origin.p[1]) + origin.p[1];
+			tempz = i * (dest.p[2] - origin.p[2]) + origin.p[2];
+
+			// check if succesful
+			if (tempy > treeRoot.yStart && tempy < treeRoot.yEnd && tempz > treeRoot.zStart && tempz < treeRoot.zEnd)
+				return Vec3Df(treeRoot.xStart, tempy, tempz);
+		}
+		else
+		{
+			// closer to xEnd
+			tempx = treeRoot.xEnd - origin.p[0];
+			i = tempx / (dest.p[0] - origin.p[0]);
+
+			tempy = i * (dest.p[1] - origin.p[1]) + origin.p[1];
+			tempz = i * (dest.p[2] - origin.p[2]) + origin.p[2];
+
+			// check if succesful
+			if (tempy > treeRoot.yStart && tempy < treeRoot.yEnd && tempz > treeRoot.zStart && tempz < treeRoot.zEnd)
+				return Vec3Df(treeRoot.xEnd, tempy, tempz);
+		}
+	}
+
+	// check x-z faces of the root
+	if (origin.p[1] != dest.p[1] && !(origin.p[1] > treeRoot.yStart && origin.p[1] < treeRoot.yEnd))
+	{
+		if (std::abs(treeRoot.yStart - origin.p[1]) < std::abs(treeRoot.yEnd - origin.p[1]))
+		{
+			// closer to yStart
+			tempy = treeRoot.yStart - origin.p[1];
+			i = tempy / (dest.p[1] - origin.p[1]);
+
+			tempx = i * (dest.p[0] - origin.p[0]) + origin.p[0];
+			tempz = i * (dest.p[2] - origin.p[2]) + origin.p[2];
+
+			// check if succesful
+			if (tempx > treeRoot.xStart && tempx < treeRoot.xEnd && tempz > treeRoot.zStart && tempz < treeRoot.zEnd)
+				return Vec3Df(tempx, treeRoot.yStart, tempz);
+		}
+		else
+		{
+			// closer to yEnd
+			tempy = treeRoot.yEnd - origin.p[1];
+			i = tempy / (dest.p[1] - origin.p[1]);
+
+			tempx = i * (dest.p[0] - origin.p[0]) + origin.p[0];
+			tempz = i * (dest.p[2] - origin.p[2]) + origin.p[2];
+
+			// check if succesful
+			if (tempx > treeRoot.xStart && tempx < treeRoot.xEnd && tempz > treeRoot.zStart && tempz < treeRoot.zEnd)
+				return Vec3Df(tempx, treeRoot.yEnd, tempz);
+		}
+	}
+
+	// check x-y faces of the root
+	if (origin.p[2] != dest.p[2] && !(origin.p[2] > treeRoot.zStart && origin.p[2] < treeRoot.zEnd))
+	{
+		if (std::abs(treeRoot.zStart - origin.p[2]) < std::abs(treeRoot.zEnd - origin.p[2]))
+		{
+			// closer to zStart
+			tempz = treeRoot.zStart - origin.p[2];
+			i = tempz / (dest.p[2] - origin.p[2]);
+
+			if (tempx > treeRoot.xStart && tempx < treeRoot.xEnd && tempy > treeRoot.yStart && tempy < treeRoot.yEnd)
+				return Vec3Df(tempx, tempy, treeRoot.zStart);
+		}
+		else
+		{
+			// closer to zEnd
+			tempz = treeRoot.zEnd - origin.p[2];
+			i = tempz / (dest.p[2] - origin.p[2]);
+
+			tempx = i * (dest.p[0] - origin.p[0]) + origin.p[0];
+			tempy = i * (dest.p[1] - origin.p[1]) + origin.p[1];
+
+			if (tempx > treeRoot.xStart && tempx < treeRoot.xEnd && tempy > treeRoot.yStart && tempy < treeRoot.yEnd)
+				return Vec3Df(tempx, tempy, treeRoot.zEnd);
+		}
+	}
+
+	return origin;
 }

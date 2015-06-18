@@ -97,5 +97,7 @@ inline AccelTreeNode findChildNode(const AccelTreeNode &parent, int axis, const 
 inline AccelTreeNode findNextNode(const AccelTreeNode &curN, Vec3Df &position, Vec3Df &destination);
 inline Vec3Df findNodeBoxHitPoint(const AccelTreeNode &curN, const Vec3Df &position, const Vec3Df &destination);
 inline bool contains(const std::vector<AccelTreeNode*> &vec, const AccelTreeNode &element);
+inline void projectOriginOnRoot(Vec3Df &origin, Vec3Df &dest);
+inline Vec3Df calculateProjectionOnRoot(Vec3Df &origin, Vec3Df &dest);
 
 #endif
