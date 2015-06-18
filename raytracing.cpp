@@ -119,49 +119,43 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 	float v = (d11 * d20 - d01 * d21) / denom;
 	float w = (d00 * d21 - d01 * d20) / denom;
 	float u = 1.0f - v - w;
-	Vec3Df InterpolatedNormal = NormalA*u + NormalB*v + NormalC*w;
+	Vec3Df interpolatedNormal = NormalA*u + NormalB*v + NormalC*w;
 
 	// default lighting in all parts that even are in shadow everywhere.
 	// Maarten - This should be Ka, ambient light, but our .mtl files have Ka = (0,0,0).
 	resCol = material.Kd()*backgroundlighting;
 
 	float angle, distanceToLight, shadowFact;
-	Vec3Df lightToIntersect, viewToIntersect, halfwayVector;
+	Vec3Df lightDir, viewToIntersect, halfwayVector;
+	Vec3Df shadowRGB = Vec3Df(1.f, 1.f, 1.f);
+	Hitpair shadowHit;
 
 	for (Vec3Df v : MyLightPositions) {
-		lightToIntersect = hitPoint - v;
-		distanceToLight = lightToIntersect.normalize();
+		lightDir = v - hitPoint;
+		distanceToLight = lightDir.normalize();
 
-		shadowFact = 0.9 * 1/MyLightPositions.size();
 		viewToIntersect = hitPoint - origin;
 
-		halfwayVector = (lightToIntersect + viewToIntersect);
+		halfwayVector = (lightDir + viewToIntersect);
 		halfwayVector.normalize();
 
-		/*
-		std::cout << "Normal: " << TriangleNormal << std::endl 
-			<< " diffuse angle: " << Vec3Df::cosAngle(TriangleNormal, lightToIntersect) << std::endl 
-			<< " specular angle:  " << Vec3Df::cosAngle(TriangleNormal, halfwayVector) << std::endl;
-		*/
 		// Diffuse lighting
-		angle = -Vec3Df::cosAngle(InterpolatedNormal, lightToIntersect);
-
+		angle = -Vec3Df::cosAngle(interpolatedNormal, lightDir);
 		if (angle > 0)
 			resCol += material.Kd()*angle*diffusePower / distanceToLight;
 		
-		angle = -Vec3Df::cosAngle(InterpolatedNormal, halfwayVector);
+		// Specular lighting
+		angle = -Vec3Df::cosAngle(interpolatedNormal, halfwayVector);
 		if (angle > 0)
 			resCol += material.Ks()*std::pow(angle, specularHardness);
-			//resCol += Vec3Df(1.0f, 1.0f, 1.0f)*std::pow(angle, specularHardness);
 
-		Vec3Df lightVector = v - hitPoint;
-		Vec3Df shadowRGB = Vec3Df(1.f, 1.f, 1.f);
-		if (Vec3Df::dotProduct(lightVector, TriangleNormal) <= 0.2) {
+		// Shadows
+		shadowFact = ShadowFactor / MyLightPositions.size();
+		if (Vec3Df::dotProduct(lightDir, interpolatedNormal) <= 0.2) {
 			resCol -= shadowFact * shadowRGB;
-		}
-		else {
+		} else {
 			for (Triangle t : triangles) {
-				Hitpair shadowHit = checkHit(t, (hitPoint + 0.001 * lightVector), v, std::numeric_limits<float>::max());
+				shadowHit = checkHit(t, (hitPoint + 0.001 * lightDir), v, std::numeric_limits<float>::max());
 				if (shadowHit.bHit) {
 					resCol -= shadowFact * shadowRGB;
 				}
@@ -172,7 +166,7 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 	if (material.illum() == 3) {
 
 		// reflectdir = dir_of_ray - 2 * ray_projected_on_normal
-		const Vec3Df reflectdir = dir - 2 * Vec3Df::dotProduct(InterpolatedNormal, dir) * InterpolatedNormal,
+		const Vec3Df reflectdir = dir - 2 * Vec3Df::dotProduct(interpolatedNormal, dir) * interpolatedNormal,
 			newOrigin = hitPoint + 0.001f * reflectdir,
 			newDest = hitPoint + reflectdir;
 
