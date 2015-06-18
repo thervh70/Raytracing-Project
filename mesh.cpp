@@ -297,8 +297,10 @@ bool Mesh::loadMesh(const char * filename, bool randomizeTriangulation)
                 }
             }
 
-			if (vhandles.size()!=texhandles.size())
-				texhandles.resize(vhandles.size(),0);
+			if (vhandles.size() != texhandles.size())
+				texhandles.resize(vhandles.size(), 0);
+			if (vhandles.size() != nhandles.size())
+				texhandles.resize(vhandles.size(), 0);
 
             if (vhandles.size()>3)
 			{
@@ -325,14 +327,14 @@ bool Mesh::loadMesh(const char * filename, bool randomizeTriangulation)
 			}
 			else if (vhandles.size()==3)
 			{
-				triangles.push_back(
-						Triangle(	vhandles[0], texhandles[0], nhandles[0],
-									vhandles[1], texhandles[1], nhandles[1],
-									vhandles[2], texhandles[2], nhandles[2]));
+				Triangle t =
+					Triangle(vhandles[0], texhandles[0], nhandles[0],
+							vhandles[1], texhandles[1], nhandles[1],
+							vhandles[2], texhandles[2], nhandles[2]);
+				t.normal = normals[nhandles[0]] + normals[nhandles[1]] + normals[nhandles[2]];
+				t.normal.normalize();
+				triangles.push_back(t);
 				triangleMaterials.push_back((materialIndex.find(matname))->second);
-				triangles[triangles.size() - 1].normal =
-					normals[nhandles[0]] + normals[nhandles[1]] + normals[nhandles[2]];
-				triangles[triangles.size() - 1].normal.normalize();
 			}
 			else
 			{
