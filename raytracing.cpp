@@ -170,16 +170,17 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 
 		// reflectdir = dir_of_ray - 2 * ray_projected_on_normal
 		const Vec3Df reflectdir = dir - 2 * Vec3Df::dotProduct(TriangleNormal, dir) * TriangleNormal,
-			newOrigin = hitPoint + 0.001 * reflectdir,
+			newOrigin = hitPoint + 0.001f * reflectdir,
 			newDest = hitPoint + reflectdir;
 
 		if (debug)
 			testRay.push_back(TestRay(newOrigin, Vec3Df(), Vec3Df()));
 
-		resCol = 0.5*resCol + 0.5*performRayTracing(newOrigin, newDest, ++k);
+		Vec3Df newCol = performRayTracing(newOrigin, newDest, ++k);
+		resCol = 0.5*resCol + 0.5*newCol;
 
 		if (debug)
-			testRay[k].color = resCol;
+			testRay[k].color = newCol;
 	}
 
 
