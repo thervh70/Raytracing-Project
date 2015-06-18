@@ -68,5 +68,8 @@
     <ClInclude Include="Matrix33.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="settings.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

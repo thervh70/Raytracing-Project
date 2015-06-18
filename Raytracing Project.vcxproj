@@ -55,6 +55,7 @@
     <ClInclude Include="Matrix33.h" />
     <ClInclude Include="mesh.h" />
     <ClInclude Include="raytracing.h" />
+    <ClInclude Include="settings.h" />
     <ClInclude Include="traqueboule.h" />
     <ClInclude Include="Vec3D.h" />
     <ClInclude Include="Vertex.h" />
