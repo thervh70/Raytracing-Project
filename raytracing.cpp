@@ -47,7 +47,7 @@ void init()
 	//one first move: initialize the first light source
 	//at least ONE light source has to be in the scene!!!
 	//here, we set it to the current location of the camera
-	MyLightPositions.push_back(*(new Vec3Df(10, 0, 0)));
+	MyLightPositions.push_back(*(new Vec3Df(0, 10, 0)));
 
 	testRay.push_back(TestRay());
 
@@ -120,44 +120,48 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 	float w = (d00 * d21 - d01 * d20) / denom;
 	float u = 1.0f - v - w;
 	Vec3Df interpolatedNormal = NormalA*u + NormalB*v + NormalC*w;
+	interpolatedNormal.normalize();
 
 	// default lighting in all parts that even are in shadow everywhere.
 	// Maarten - This should be Ka, ambient light, but our .mtl files have Ka = (0,0,0).
 	resCol = material.Kd()*backgroundlighting;
 
-	float angle, distanceToLight, shadowFact;
-	Vec3Df lightDir, viewToIntersect, halfwayVector;
-	Vec3Df shadowRGB = Vec3Df(1.f, 1.f, 1.f);
+	float angle, distanceToLight;
+	Vec3Df lightDir, viewDir, halfwayVector;
+	float specularHighlight = material.Ns();
+
+	// Full shadow reduces light by (0.9,0.9,0.9) when ShadowFactor = 0.9
+	Vec3Df shadowRGB = Vec3Df(1.f, 1.f, 1.f) * ShadowFactor / MyLightPositions.size();
 	Hitpair shadowHit;
+
+	viewDir = origin - hitPoint;
+	viewDir.normalize();
 
 	for (Vec3Df v : MyLightPositions) {
 		lightDir = v - hitPoint;
 		distanceToLight = lightDir.normalize();
 
-		viewToIntersect = hitPoint - origin;
-
-		halfwayVector = (lightDir + viewToIntersect);
+		halfwayVector = (lightDir + viewDir);
 		halfwayVector.normalize();
 
 		// Diffuse lighting
-		angle = -Vec3Df::cosAngle(interpolatedNormal, lightDir);
+		angle = Vec3Df::cosAngle(interpolatedNormal, lightDir);
 		if (angle > 0)
-			resCol += material.Kd()*angle*diffusePower / distanceToLight;
-		
-		// Specular lighting
-		angle = -Vec3Df::cosAngle(interpolatedNormal, halfwayVector);
-		if (angle > 0)
-			resCol += material.Ks()*std::pow(angle, specularHardness);
+			resCol += material.Kd()*angle * diffusePower; // / distanceToLight;
 
 		// Shadows
-		shadowFact = ShadowFactor / MyLightPositions.size();
 		if (Vec3Df::dotProduct(lightDir, interpolatedNormal) <= 0.2) {
-			resCol -= shadowFact * shadowRGB;
+			resCol -= shadowRGB;
 		} else {
+			// Specular lighting
+			angle = Vec3Df::cosAngle(interpolatedNormal, halfwayVector);
+			if (angle > 0)
+				resCol += material.Ks()*std::pow(angle, specularHighlight);
+
 			for (Triangle t : triangles) {
 				shadowHit = checkHit(t, (hitPoint + 0.001 * lightDir), v, std::numeric_limits<float>::max());
 				if (shadowHit.bHit) {
-					resCol -= shadowFact * shadowRGB;
+					resCol -= shadowRGB;
 				}
 			}
 		}
