@@ -270,7 +270,6 @@ double RayTracer::doDaRayTracingShizz() {
 	unsigned n = Thread_Amount;
 	n = (n < 1 ? 1 : n); //not less than  1, duh. xD
 	n = (n > 16 ? 16 : n); //not more than 16, as thread array is hardcoded length 16
-	std::thread t[16];
 	printf("There are %d threads", n);
 	float linesperthread = float(WindowSize_Y) / float(n);
 
