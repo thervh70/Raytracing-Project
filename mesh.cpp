@@ -300,7 +300,7 @@ bool Mesh::loadMesh(const char * filename, bool randomizeTriangulation)
 			if (vhandles.size() != texhandles.size())
 				texhandles.resize(vhandles.size(), 0);
 			if (vhandles.size() != nhandles.size())
-				texhandles.resize(vhandles.size(), 0);
+				nhandles.resize(vhandles.size(), 0);
 
             if (vhandles.size()>3)
 			{
