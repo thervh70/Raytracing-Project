@@ -70,6 +70,7 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 	std::vector<Triangle> triangles = MyMesh.triangles;
 	Material material;
 	bool hit = false;
+	float a, b;
 
 	for (int i = 0; i < triangles.size(); ++i)
 	{
@@ -80,6 +81,8 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 
 		hit = true;
 
+		a = hitpair.res[0];
+		b = hitpair.res[1];
 		minT = hitpair.res[2];
 		triangleIndex = i;
 		material = MyMesh.materials[MyMesh.triangleMaterials[i]];
@@ -91,35 +94,15 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 
 	if (!hit) return backgroundColor;
 
-	// Calculate intersection point with triangle from origin
-	Vec3Df intersectionPoint = origin + minT * (dest - origin);
-
 	// Normals of three vectors of triangle
 	Vec3Df
-		a = MyMesh.vertices[MyMesh.triangles[triangleIndex].v[0]].p,
-		b = MyMesh.vertices[MyMesh.triangles[triangleIndex].v[1]].p,
-		c = MyMesh.vertices[MyMesh.triangles[triangleIndex].v[2]].p,
-		NormalA = MyMesh.vertices[MyMesh.triangles[triangleIndex].v[0]].n,
-		NormalB = MyMesh.vertices[MyMesh.triangles[triangleIndex].v[1]].n,
-		NormalC = MyMesh.vertices[MyMesh.triangles[triangleIndex].v[2]].n;
+		normalA = MyMesh.vertices[triangle.v[0]].n,
+		normalB = MyMesh.vertices[triangle.v[1]].n,
+		normalC = MyMesh.vertices[triangle.v[2]].n;
 
-	/**
-	Barycentric vertex normal biliniear interpolation shading mode
-	**/
-	Vec3Df 
-		vp0 = b - a,
-		vp1 = c - a,
-		vp2 = intersectionPoint - a;
-	float d00 = Vec3Df::dotProduct(vp0, vp0);
-	float d01 = Vec3Df::dotProduct(vp0, vp1);
-	float d11 = Vec3Df::dotProduct(vp1, vp1);
-	float d20 = Vec3Df::dotProduct(vp2, vp0);
-	float d21 = Vec3Df::dotProduct(vp2, vp1);
-	float denom = d00 * d11 - d01 * d01;
-	float v = (d11 * d20 - d01 * d21) / denom;
-	float w = (d00 * d21 - d01 * d20) / denom;
-	float u = 1.0f - v - w;
-	Vec3Df interpolatedNormal = NormalA*u + NormalB*v + NormalC*w;
+	// Barycentric vertex normal biliniear interpolation shading mode
+	float u = a, v = b, w = 1.f - u - v;
+	Vec3Df interpolatedNormal = normalA*u + normalB*v + normalC*w;
 	interpolatedNormal.normalize();
 
 	// default lighting in all parts that even are in shadow everywhere.
@@ -145,7 +128,7 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 		halfwayVector.normalize();
 
 		// Diffuse lighting
-		angle = Vec3Df::cosAngle(interpolatedNormal, lightDir);
+		angle = Vec3Df::dotProduct(interpolatedNormal, lightDir); // cos(phi) = a . b / 1 / 1 (vectors are normalized)
 		if (angle > 0)
 			resCol += material.Kd()*angle * diffusePower; // / distanceToLight;
 
@@ -154,7 +137,7 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 			resCol -= shadowRGB;
 		} else {
 			// Specular lighting
-			angle = Vec3Df::cosAngle(interpolatedNormal, halfwayVector);
+			angle = Vec3Df::dotProduct(interpolatedNormal, halfwayVector);
 			if (angle > 0)
 				resCol += material.Ks()*std::pow(angle, specularHighlight);
 
@@ -175,7 +158,7 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 			newDest = hitPoint + reflectdir;
 
 		if (debug)
-			testRay.push_back(TestRay(newOrigin, Vec3Df(), Vec3Df()));
+			testRay.push_back(TestRay(hitPoint, Vec3Df(), Vec3Df()));
 
 		Vec3Df newCol = performRayTracing(newOrigin, newDest, ++k);
 		resCol = 0.5*resCol + 0.5*newCol;
@@ -314,44 +297,11 @@ void yourKeyboardFunc(char t, int x, int y, const Vec3Df & rayOrigin, const Vec3
 	}
 }
 
-// Return the intersection point of the ray with the object in the scene
-// return the rayDest if no object was hit
-// Maarten - I think we don't need this function anymore, as this was used for debug, 
-// but the debug stuff has been moved into performRayTracing via bool debug
-/*inline Vec3Df calculateIntersectionPoint(const Vec3Df & rayOrigin, const Vec3Df & rayDest)
-{
-	// Get the triangles
-	std::vector<Triangle> triangles = MyMesh.triangles;
-	Triangle *closestTriangle = nullptr;
-	float minT = std::numeric_limits<float>::max();
-	Hitpair hitpair;
-
-	// Check for each triangle if the ray hits it,
-	// after this loop, the closest triangle will be stored in closestTriangle
-	for (int i = 0; i < triangles.size(); ++i)
-	{
-		hitpair = checkHit(triangles[i], rayOrigin, rayDest, minT);
-		if (!hitpair.bHit)
-			continue;
-		minT = hitpair.res[2];
-		closestTriangle = &triangles[i];
-	}
-
-	// If no intersection, return the rayDest
-	if (closestTriangle == nullptr)
-	{
-		return rayDest;
-	}
-
-	// Return the intersecton point with the triangle
-	return rayOrigin + minT * (rayDest - rayOrigin);
-}*/
-
 // check if the triangle is hit by the ray from origin to dest and closer to the origin than minT
 inline Hitpair checkHit(const Triangle & triangle, const Vec3Df & origin, const Vec3Df & dest, float minT)
 {
 	// local variables
-	Vec3Df v0, v1, v2, vec1, vec2, vec3, dir = dest - origin;
+	Vec3Df v0, v1, v2, vec1, vec2, dir = dest - origin;
 	Hitpair result;
 
 	// Vertices of the triangle
@@ -363,8 +313,6 @@ inline Hitpair checkHit(const Triangle & triangle, const Vec3Df & origin, const 
 	vec1 = v0 - v2;
 	// Vector from v2 to v1
 	vec2 = v1 - v2;
-	// Vector from origin to v0
-	vec3 = v0 - origin;
 
 	Matrix33f matrix(vec1, vec2, dir);
 	Vec3Df res2 = matrix.solve(origin - v2);
