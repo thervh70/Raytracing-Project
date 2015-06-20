@@ -38,6 +38,7 @@ struct Hitpair {
 	bool bHit;
 	Vec3Df res;
 	Vec3Df hitPoint;
+	Material prev_material;
 };
 
 struct KDtreeCube {

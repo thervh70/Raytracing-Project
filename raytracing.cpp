@@ -176,6 +176,11 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 	// n1 first material, n2 second material.
 	float n1, n2;
 
+	// n1 is the material from where the ray comes from, which is the Ni value if it has a Ni value, else float 1.
+	n1 = (hitpair.prev_material.has_Ni()) ? hitpair.prev_material.Ni() : 1.0f;
+	// n2 is the material of the hitPoint, which is the Ni value if it has a Ni value, else float 1.
+	n2 = (material.has_Ni()) ? material.Ni() : 1.0f;
+
 	// If the refraction index of a material is greater than 1, 
 	// then refraction has to be taken into account.
 	if (material.Ni() > 1.0f) {
