@@ -167,6 +167,38 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 			testRay[k].color = newCol;
 	}
 
+	// Normalized viewing vector, 
+	// which will be considered as the vector of incidence.
+	Vec3Df vIncidence = dir;
+	vIncidence.normalize();
+
+	// These are the indices of refraction.
+	// n1 first material, n2 second material.
+	float n1, n2;
+
+	// If the refraction index of a material is greater than 1, 
+	// then refraction has to be taken into account.
+	if (material.Ni() > 1.0f) {
+		// Transmission Ray calculation using a simplified version of the gigantic formula given in the slides:
+		// (1); tRay = n1/n2 * vIncidence + ( n1/n2 * cos(thetaIncidence) - sqrt(1 - sin^2(thetaTransmitted) ) ) * normal.
+		// with (2); sin^2(thetaTransmitted) = (n1/n2)^2 * (1 - cos^2(thetaIncidence))
+
+		// Refractionindex is based on the division of the two refractive indices 
+		// of the involved materials.
+		float refractIndex = n1 / n2;
+
+		// Cos(Theta) with theta as the angle of incidence calculation, by
+		// calculating the dotProduct of the vector of indence and the normal of the hitPoint.
+		float cosThetaIncidence = Vec3Df::dotProduct(vIncidence, interpolatedNormal);
+
+		// Sin^2(Theta) calculation, with theta as the angle of incidence, by using formula 2.
+		float sin2ThetaTransmitted = pow(refractIndex, 2) * (1 - (pow(cosThetaIncidence, 2)));
+
+		// The result is a transmitted ray, by using formula 1.
+		Vec3Df tRay = refractIndex * vIncidence + (refractIndex * cosThetaIncidence - sqrt(1 - sin2ThetaTransmitted)) * interpolatedNormal;
+
+	}
+
 
 	// f(x,y) = (1 - x)*v1 + (x - y)*v2 + y*v3
 
