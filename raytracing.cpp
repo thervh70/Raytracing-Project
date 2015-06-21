@@ -72,8 +72,6 @@ void init()
 //return the color of your pixel.
 Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 {
-//	Vec3Df origin = Vec3Df(3.0f, 1.4f, 4.4f);
-//	Vec3Df dest = Vec3Df(-2.1f, 2.3f, -4.7f);
 
 	if (k > 5) return Vec3Df();
 
@@ -136,8 +134,7 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 			}
 			++n;
 		}
-
-		if (gotHit && (/*currNode.parentList.back() == &hitNode ||*/ !contains(currNode.parentList, hitNode)))
+		if (gotHit && (currNode.parentList.back() == &hitNode || !contains(currNode.parentList, hitNode)))
 			//found hit
 			break;
 
@@ -861,7 +858,7 @@ inline AccelTreeNode findNextNode(const AccelTreeNode &curN, const Vec3Df &posit
 			tempy = f * dir.p[1] + position.p[1];
 
 			// return the root if we would otherwise go outside of the root.
-			if (curN.yEnd == treeRoot.yEnd)
+			if (curN.zEnd == treeRoot.zEnd)
 				return treeRoot;
 
 			// return the right node
