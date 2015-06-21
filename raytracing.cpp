@@ -211,8 +211,8 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 			if (angle > 0)
 				resCol += material.Ks()*std::pow(angle, specularHighlight);
 
-			for (Triangle t : triangles) {
-				shadowHit = checkHit(t, (hitPoint + 0.001 * lightDir), v, std::numeric_limits<float>::max());
+			for (Triangle t : MyMesh.triangles) {
+				shadowHit = checkHit(t, (hitPoint + 0.001f * lightDir), v, std::numeric_limits<float>::max());
 				if (shadowHit.bHit) {
 					resCol -= shadowRGB;
 				}
