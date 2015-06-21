@@ -100,6 +100,18 @@ class Material
 			name_=s;
 		}
 
+		// load the textures
+/*		void loadTexture()
+		{
+
+		}
+
+		// get the texture at position
+		const Vec3Df& getTexture(const Vec3Df &position)
+		{
+
+		}*/
+
         const Vec3Df& Kd( void ) const { return Kd_; } //diffuse
         const Vec3Df& Ka( void ) const { return Ka_; } //ambiant
         const Vec3Df& Ks( void ) const { return Ks_; } //specular

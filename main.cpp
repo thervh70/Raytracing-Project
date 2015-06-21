@@ -13,6 +13,8 @@
 #include "mesh.h"
 #include "traqueboule.h"
 #include "imageWriter.h"
+#include "settings.h"
+
 
 
 //This is the main application
@@ -131,7 +133,7 @@ int main(int argc, char** argv)
 	//normals will be normalized in the graphics pipeline
 	glEnable(GL_NORMALIZE);
     //clear color of the background is black.
-	glClearColor (0.0, 0.0, 0.0, 0.0);
+	glClearColor (backgroundColor[0], backgroundColor[1], backgroundColor[2], 0.0);
 
 	
 	// Activate rendering modes
