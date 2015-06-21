@@ -476,8 +476,8 @@ void splitSpaces(AccelTreeNode& tree, int axis) {
 
 	// split the KDtreeCube into subspaces and recursevily recall on those subspaces
 
-	// stop if there are 10 or less triangles in the current level (!!! 10 is randomly chosen !!!)
-	if (tree.triangles.size() < 11)
+	// stop if there are 50 or less triangles in the current level (!!! 50 is randomly chosen !!!)
+	if (tree.triangles.size() < 51)
 	{
 		tree.leftChild = nullptr;
 		tree.rightChild = nullptr;
