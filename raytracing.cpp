@@ -29,7 +29,12 @@ std::vector<TestRay> testRay;
 bool debug = false;
 
 // built KD tree
-std::vector<KDtreeCube> kdTree;
+AccelTreeNode treeRoot;
+
+// remember if the acceleration tree has been built
+bool builtAccelTree = false;
+int treeDepth = 0;
+int treeNodes = 1;
 
 //use this function for any preprocessing of the mesh.
 void init()
@@ -55,11 +60,19 @@ void init()
 	/*testRayOrigin = Vec3Df(2.0f, 5.0f, 1.0f);
 	testRayDestination = Vec3Df(8.0f, 7.0f, 4.0f);
 	performRayTracing(testRayOrigin, testRayDestination);*/
+
+	// Build the acceleration tree
+	if (!builtAccelTree)
+	{
+		buildKDtree();
+		builtAccelTree = true;
+	}
 }
 
 //return the color of your pixel.
 Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 {
+
 	if (k > 5) return Vec3Df();
 
 	Vec3Df resCol = Vec3Df(), hitPoint, dir = dest - origin;
@@ -68,27 +81,84 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 	float t, minT = std::numeric_limits<float>::max();
 	int triangleIndex;
 	std::vector<Triangle> triangles = MyMesh.triangles;
+
 	Material material;
 	bool hit = false;
 	float a, b;
 
-	for (int i = 0; i < triangles.size(); ++i)
+	// get starting node
+	AccelTreeNode currNode = findChildNode(treeRoot, 0, origin);
+	AccelTreeNode hitNode = treeRoot;
+	std::vector<AccelTreeNode*> oldParentList;
+	bool gotHit = false;
+
+	// If current point is outside of the root (camera is far away), then put it inside the root.
+/*	if (currentPoint.p[0] < treeRoot.xStart || currentPoint.p[0] > treeRoot.xEnd ||
+		currentPoint.p[1] < treeRoot.yStart || currentPoint.p[1] > treeRoot.yEnd ||
+		currentPoint.p[2] < treeRoot.zStart || currentPoint.p[2] > treeRoot.zEnd)
 	{
-		hitpair = checkHit(triangles[i], origin, dest, minT);
+		projectOriginOnRoot(currentPoint, currentDestination);
+	}*/
 
-		if (!hitpair.bHit)
-			continue;
+	while (true)
+	{
+		// Create an iterator for the current and old parent lists
+		std::vector<AccelTreeNode*> curPar = currNode.parentList;
+		int n = 0;
 
-		hit = true;
+		// skip all parents which you've checked already
+		while (n < curPar.size() && n < oldParentList.size() && curPar[n] == oldParentList[n])
+		{
+			++n;
+		}
 
-		a = hitpair.res[0];
-		b = hitpair.res[1];
-		minT = hitpair.res[2];
-		triangleIndex = i;
-		material = MyMesh.materials[MyMesh.triangleMaterials[i]];
-		triangle = triangles[i];
-		hitPoint = hitpair.hitPoint;
+		// iterate over all triangles which you haven't checked yet
+		while (n < curPar.size())
+		{
+			triangles = (*curPar[n]).triangles;
+			for (int i = 0; i < triangles.size(); ++i)
+			{
+
+				hitpair = checkHit(triangles[i], origin, dest, minT);
+
+				if (!hitpair.bHit)
+					continue;
+				hitNode = (*curPar[n]);
+				gotHit = true;
+				minT = hitpair.res[2];
+				triangle = triangles[i];
+				hitPoint = hitpair.hitPoint;
+				
+				a = hitpair.res[0];
+				b = hitpair.res[1];
+			}
+			++n;
+		}
+		if (gotHit && (currNode.parentList.back() == &hitNode || !contains(currNode.parentList, hitNode)))
+			//found hit
+			break;
+
+		oldParentList = currNode.parentList;
+		currNode = findNextNode(currNode, origin, dest);
+		
+		if (currNode.parentList.size() == 1)
+			//outside of root
+			break;
 	}
+
+	// get the right material
+	for (int i = 0; i < MyMesh.triangles.size();++i)
+	{
+		if (MyMesh.triangles[i] == triangle)
+		{
+			hit = true;
+			triangleIndex = i;
+			material = MyMesh.materials[MyMesh.triangleMaterials[i]];
+			break;
+		}
+	}
+	
+	
 	if (debug)
 		testRay[k].destination = hit ? hitPoint : dest;
 
@@ -124,25 +194,25 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 		lightDir = v - hitPoint;
 		distanceToLight = lightDir.normalize();
 
-		halfwayVector = (lightDir + viewDir);
-		halfwayVector.normalize();
-
 		// Diffuse lighting
 		angle = Vec3Df::dotProduct(interpolatedNormal, lightDir); // cos(phi) = a . b / 1 / 1 (vectors are normalized)
 		if (angle > 0)
 			resCol += material.Kd()*angle * diffusePower; // / distanceToLight;
 
-		// Shadows
-		if (Vec3Df::dotProduct(lightDir, interpolatedNormal) <= 0.2) {
+		// Self Shadows (Dark side of object
+		if (Vec3Df::dotProduct(lightDir, interpolatedNormal) <= 0) {
 			resCol -= shadowRGB;
 		} else {
 			// Specular lighting
+			halfwayVector = (lightDir + viewDir);
+			halfwayVector.normalize();
 			angle = Vec3Df::dotProduct(interpolatedNormal, halfwayVector);
 			if (angle > 0)
 				resCol += material.Ks()*std::pow(angle, specularHighlight);
 
-			for (Triangle t : triangles) {
-				shadowHit = checkHit(t, (hitPoint + 0.001 * lightDir), v, std::numeric_limits<float>::max());
+			for (Triangle t : MyMesh.triangles) {
+				//Shadow casted by an object
+				shadowHit = checkHit(t, (hitPoint + 0.001f * lightDir), v, std::numeric_limits<float>::max());
 				if (shadowHit.bHit) {
 					resCol -= shadowRGB;
 				}
@@ -285,6 +355,9 @@ void yourDebugDraw()
 //    while to complete...
 void yourKeyboardFunc(char t, int x, int y, const Vec3Df & rayOrigin, const Vec3Df & rayDestination)
 {
+	AccelTreeNode test;
+	AccelTreeNode testNode;
+	Vec3Df position = Vec3Df(0.274594f, 1.89004f, 3.5032f), destination = Vec3Df(0.526746f,0.308055f,0.47311f);
 	switch (t)
 	{
 	case ' ':
@@ -304,6 +377,7 @@ void yourKeyboardFunc(char t, int x, int y, const Vec3Df & rayOrigin, const Vec3
 		// make the ray the color of the intersection point (and slightly brighter)
 		testRay[0].color = performRayTracing(testRay[0].origin, testRay[0].destination, 0);
 
+		std::cout << "Test ray trace:" << std::endl;
 
 		for (Vec3Df v : MyLightPositions) {
 			std::cout << "Light position: " << v << std::endl;
@@ -377,106 +451,609 @@ inline Hitpair checkHit(const Triangle & triangle, const Vec3Df & origin, const 
 // Build a KD tree and store the planes with the triangles in a vector of vectors
 void buildKDtree()
 {
+	std::cout << std::endl;
+	std::cout << "Building tree ..." << std::endl;
+
 	float xMin, xMax, yMin, yMax, zMin, zMax;
 
 	// Calculate the bounding box of the scene
 	std::vector<Triangle>::const_iterator it = MyMesh.triangles.begin();
-	xMin = (*it).v[0];
-	xMax = (*it).v[0];
-	yMin = (*it).v[1];
-	yMax = (*it).v[1];
-	zMin = (*it).v[2];
-	zMax = (*it).v[2];
-	++it;
+	xMin = MyMesh.vertices[(*it).v[0]].p[0];
+	xMax = MyMesh.vertices[(*it).v[0]].p[0];
+	yMin = MyMesh.vertices[(*it).v[0]].p[1];
+	yMax = MyMesh.vertices[(*it).v[0]].p[1];
+	zMin = MyMesh.vertices[(*it).v[0]].p[2];
+	zMax = MyMesh.vertices[(*it).v[0]].p[2];
 
 	// Get the smallest and largest x, y and z values of the triangles of the mesh
 	while (it != MyMesh.triangles.end()) {
+		for (int i = 0; i < 3; ++i)
+		{
+			// check x
+			if (MyMesh.vertices[(*it).v[i]].p[0] < xMin)
+				xMin = MyMesh.vertices[(*it).v[i]].p[0];
+			else if (MyMesh.vertices[(*it).v[i]].p[0]> xMax)
+				xMax = MyMesh.vertices[(*it).v[i]].p[0];
+
+			// check y
+			if (MyMesh.vertices[(*it).v[i]].p[1] < yMin)
+				yMin = MyMesh.vertices[(*it).v[i]].p[1];
+			else if (MyMesh.vertices[(*it).v[i]].p[1] > yMax)
+				yMax = MyMesh.vertices[(*it).v[i]].p[1];
+
+			// check z
+			if (MyMesh.vertices[(*it).v[i]].p[2] < zMin)
+				zMin = MyMesh.vertices[(*it).v[i]].p[2];
+			else if (MyMesh.vertices[(*it).v[i]].p[2] > zMax)
+				zMax = MyMesh.vertices[(*it).v[i]].p[2];
+		}
 		++it;
-		// check x
-		if ((*it).v[0] < xMin)
-			xMin = (*it).v[0];
-		else if ((*it).v[0] > xMax)
-			xMax = (*it).v[0];
-
-		// check y
-		if ((*it).v[1] < yMin)
-			yMin = (*it).v[1];
-		else if ((*it).v[1] > yMax)
-			yMax = (*it).v[1];
-
-		// check z
-		if ((*it).v[2] < zMin)
-			zMin = (*it).v[2];
-		else if ((*it).v[2] > zMax)
-			zMax = (*it).v[2];
 	}
 
-	//TODO: split the scene into spaces which contain triangles.
-	KDtreeCube scene = KDtreeCube(MyMesh.triangles, xMin, xMax, yMin, yMax, zMin, zMax);
-	unsigned int minTriangles = (int) std::sqrtf( MyMesh.triangles.size());
-	kdTree = splitSpace(scene, 0, minTriangles);
+	// Assign the found values to the kd tree (with a small margin)
+	// !!! IMPORTANT: NEED BETTER SOLUTION THAN INCREASING MARGIN TO ALLOW CAMERA TO BE OUTSIDE OF THE ROOT !!!
+	treeRoot = AccelTreeNode(MyMesh.triangles, xMin - 5.1f, xMax + 5.1f, yMin - 5.1f, yMax + 5.1f, zMin - 5.1f, zMax + 5.1f);
+
+	// Add the root node to it's own parent list.
+	treeRoot.parentList.push_back(&treeRoot);
+
+	// Split the main node into smaller nodes
+	splitSpaces(treeRoot, 0);
+	std::cout << "... done building tree" << std::endl;
+	std::cout << "Tree depth: " << treeDepth << std::endl;
+	std::cout << "Amount of nodes: " << treeNodes << std::endl;
+	std::cout << std::endl;
 }
 
-// recursively split spaces in half, till the spaces are small enough
-std::vector<KDtreeCube> splitSpace(KDtreeCube cube, unsigned int axis, unsigned int minTriangles)
-{
-	std::vector<KDtreeCube> result;
+void splitSpaces(AccelTreeNode& tree, int axis) {
 
-	// don't divide subspaces with less than minTriangles triangles <--- !!! IMPORTANT: minTriangles is randomly chosen, needs testing !!!
-	if (cube.triangles.size() < minTriangles)
+	if (axis > treeDepth)
+		++treeDepth;
+
+
+	// split the KDtreeCube into subspaces and recursevily recall on those subspaces
+
+	// stop if there are 50 or less triangles in the current level (!!! 50 is randomly chosen !!!)
+	if (tree.triangles.size() < 51)
 	{
-		result.push_back(cube);
-		return result;
+		tree.leftChild = nullptr;
+		tree.rightChild = nullptr;
+		return;
 	}
-	KDtreeCube left, right;
+
+
+	// stop if subspace axis which is being divided is smaller than 0.01 (!!! 0.01 is randomly chosen !!!)
+	if ((axis % 3 == 0 && tree.xEnd - tree.xStart < 0.01) ||
+		(axis % 3 == 1 && tree.yEnd - tree.yStart < 0.01) ||
+		(tree.zEnd - tree.zStart < 0.01))
+	{
+		tree.leftChild = nullptr;
+		tree.rightChild = nullptr;
+		return;
+	}
+
+	AccelTreeNode *left = new AccelTreeNode(), *right = new AccelTreeNode();
+	std::vector<Triangle> *leftTri = new std::vector<Triangle>(), *rightTri = new std::vector<Triangle>(), *bothTri = new std::vector<Triangle>();
+	
+	float mid;
+
 	// split the spacce in 2 smaller subspaces and recursively call this function on those subspaces
 	if (axis % 3 == 0) {
 		//split x-axis
-		float xMid = (cube.xStart + cube.xEnd) / 2;
+		mid = (tree.xStart + tree.xEnd) / 2.0f;
 
 		// split the space in half
-		left = KDtreeCube(cube.triangles, cube.xStart, xMid, cube.yStart, cube.yEnd, cube.zStart, cube.zEnd);
-		right = KDtreeCube(cube.triangles, xMid, cube.xEnd, cube.yStart, cube.yEnd, cube.zStart, cube.zEnd);
-
+		(*left) = AccelTreeNode(tree.xStart, mid, tree.yStart, tree.yEnd, tree.zStart, tree.zEnd);
+		(*right) = AccelTreeNode(mid, tree.xEnd, tree.yStart, tree.yEnd, tree.zStart, tree.zEnd);
 	}
 	else if (axis % 3 == 1) {
 		//split y-axis
-		float yMid = (cube.yStart + cube.yEnd) / 2;
+		mid = (tree.yStart + tree.yEnd) / 2.0f;
 
 		// split the space in half
-		left = KDtreeCube(cube.triangles, cube.xStart, cube.xEnd, cube.yStart, yMid, cube.zStart, cube.zEnd);
-		right = KDtreeCube(cube.triangles, cube.xStart, cube.xEnd, yMid, cube.yEnd, cube.zStart, cube.zEnd);
-
+		(*left) = AccelTreeNode(tree.xStart, tree.xEnd, tree.yStart, mid, tree.zStart, tree.zEnd);
+		(*right) = AccelTreeNode(tree.xStart, tree.xEnd, mid, tree.yEnd, tree.zStart, tree.zEnd);
 	}
 	else if (axis % 3 == 2) {
 		//split z-axis
-		float zMid = (cube.yStart + cube.yEnd) / 2;
+		mid = (tree.zStart + tree.zEnd) / 2.0f;
 
 		// split the space in half
-		left = KDtreeCube(cube.triangles, cube.xStart, cube.xEnd, cube.yStart, cube.yEnd, cube.zStart, zMid);
-		right = KDtreeCube(cube.triangles, cube.xStart, cube.xEnd, cube.yStart, cube.yEnd, zMid, cube.zEnd);
+		(*left) = AccelTreeNode(tree.xStart, tree.xEnd, tree.yStart, tree.yEnd, tree.zStart, mid);
+		(*right) = AccelTreeNode(tree.xStart, tree.xEnd, tree.yStart, tree.yEnd, mid, tree.zEnd);
 	}
 
-	// remove the triangles which are not inside of the cube
-	removeTrianglesNotInSubSpace(left);
-	removeTrianglesNotInSubSpace(right);
+	// calculate which triangles should be in the left, right, or both parts.
+	for (std::vector<Triangle>::const_iterator it = tree.triangles.begin(); it < tree.triangles.end(); ++it)
+	{
+		if (MyMesh.vertices[(*it).v[0]].p[axis % 3] < mid && MyMesh.vertices[(*it).v[1]].p[axis % 3] < mid &&
+			MyMesh.vertices[(*it).v[2]].p[axis % 3] < mid)
+			(*leftTri).push_back(*it);
+		else if (MyMesh.vertices[(*it).v[0]].p[axis % 3] > mid && MyMesh.vertices[(*it).v[1]].p[axis % 3] > mid &&
+			MyMesh.vertices[(*it).v[2]].p[axis % 3] > mid)
+			(*rightTri).push_back(*it);
+		else
+			(*bothTri).push_back(*it);
+	}
+
+	// Assign the triangles to the right node
+	tree.triangles = *bothTri;
+	(*left).triangles = *leftTri;
+	(*right).triangles = *rightTri;
+
+	// Set the parent lists of the left/right child nodes
+	(*left).parentList = tree.parentList;
+	(*left).parentList.push_back(left);
+	(*right).parentList = tree.parentList;
+	(*right).parentList.push_back(right);
+
+	// Set left/right nodes as child nodes
+	tree.leftChild = left;
+	tree.rightChild = right;
 
 	// recursively calculate the KDtree subspaces of the two parts
-	std::vector<KDtreeCube> leftres = splitSpace(left, axis + 1, minTriangles);
-	std::vector<KDtreeCube> rightres = splitSpace(right, axis + 1, minTriangles);
-
-	// concatenate the resulting vectors
-	result.reserve(leftres.size() + rightres.size());
-	result.insert(result.end(), leftres.begin(), leftres.end());
-	result.insert(result.end(), rightres.begin(), rightres.end());
-
-	
-	// return the resulting vector
-	return result;
+	splitSpaces((*left), axis + 1);
+	++treeNodes;
+	splitSpaces((*right), axis + 1);
+	++treeNodes;
 }
 
-// Check which of the triangles in space really lie within the space and delete the other traingles
-void removeTrianglesNotInSubSpace(KDtreeCube cube)
+
+// Recursively find in which child node of the given parent the given position is
+// If you don't know a parent, use the treeRoot variable (it's the root of the tree) and use axis = 0
+inline AccelTreeNode findChildNode(const AccelTreeNode &parent, int axis, const Vec3Df &position)
 {
-	//TODO: find which triangles (partly) lie within the defined cube
+	// if this node doesn't have any children, we found the right node
+	if (parent.leftChild == nullptr)
+		return parent;
+
+	// else continue looking
+	if (axis % 3 == 0)
+	{
+		// check x-axis
+		if ((*parent.leftChild).xEnd > position.p[0])
+			return findChildNode((*parent.leftChild), axis + 1, position);
+		else
+			return findChildNode((*parent.rightChild), axis + 1, position);
+	}
+	else if (axis % 3 == 1)
+	{
+		// check y-axis
+		if ((*parent.leftChild).yEnd > position.p[1])
+			return findChildNode((*parent.leftChild), axis + 1, position);
+		else
+			return findChildNode((*parent.rightChild), axis + 1, position);
+	}
+	else
+	{
+		// check z-axis
+		if ((*parent.leftChild).zEnd > position.p[2])
+			return findChildNode((*parent.leftChild), axis + 1, position);
+		else
+			return findChildNode((*parent.rightChild), axis + 1, position);
+	}
+}
+
+// Find the point where the ray hits the outside of the current node
+inline AccelTreeNode findNextNode(const AccelTreeNode &curN, const Vec3Df &position, const Vec3Df &destination)
+{
+
+	Vec3Df dir = destination - position;
+	float f, tempx, tempy, tempz;
+	AccelTreeNode node = treeRoot;
+	
+	// Check the y-z faces of the space
+	if (dir.p[0] != 0)
+	{
+		if (dir.p[0] < 0)
+		{
+			// negative direction:
+			// check xStart
+			f = (curN.xStart - position.p[0]) / dir.p[0];
+			tempy = f * dir.p[1] + position.p[1];
+			tempz = f * dir.p[2] + position.p[2];
+
+			// check if succesful
+			if (tempy > curN.yStart && tempy < curN.yEnd && tempz > curN.zStart && tempz < curN.zEnd)
+			{
+				// return the root if we would otherwise go outside of the root.
+				if (curN.xStart == treeRoot.xStart)
+					return treeRoot;
+				
+				// return the right node
+				for (int axis = 0;; ++axis)
+				{
+					if (axis % 3 == 0)
+					{
+						// check x-axis
+						if((*node.leftChild).xEnd >= curN.xStart)
+							node = *node.leftChild;
+						else
+							node = *node.rightChild;
+					}
+					else if (axis % 3 == 1)
+					{
+						// check y-axis
+						if(tempy < (*node.leftChild).yEnd)
+							node = *node.leftChild;
+						else
+							node = *node.rightChild;
+					}
+					else
+					{
+						// check z-axis
+						if (tempz < (*node.leftChild).zEnd)
+							node = *node.leftChild;
+						else
+							node = *node.rightChild;
+					}
+					if (node.leftChild == nullptr)
+						return node;
+				}
+			}
+		}
+		else
+		{
+			// positive direction:
+			// check xEnd
+			f = (curN.xEnd - position.p[0]) / dir.p[0];
+			tempy = f * dir.p[1] + position.p[1];
+			tempz = f * dir.p[2] + position.p[2];
+
+			// check if succesful
+			if (tempy > curN.yStart && tempy < curN.yEnd && tempz > curN.zStart && tempz < curN.zEnd)
+			{
+				// return the root if we would otherwise go outside of the root.
+				if (curN.xEnd == treeRoot.xEnd)
+					return treeRoot;
+
+				// return the right node
+				for (int axis = 0;; ++axis)
+				{
+					if (axis % 3 == 0)
+					{
+						// check x-axis
+						if ((*node.leftChild).xEnd <= curN.xEnd)
+							node = *node.rightChild;
+						else
+							node = *node.leftChild;
+					}
+					else if (axis % 3 == 1)
+					{
+						// check y-axis
+						if (tempy < (*node.leftChild).yEnd)
+							node = *node.leftChild;
+						else
+							node = *node.rightChild;
+					}
+					else
+					{
+						// check z-axis
+						if (tempz < (*node.leftChild).zEnd)
+							node = *node.leftChild;
+						else
+							node = *node.rightChild;
+					}
+					if (node.leftChild == nullptr)
+						return node;
+				}
+			}
+		}
+	}
+
+	// Check the x-z faces of the space
+	if (dir.p[1] != 0)
+	{
+		if (dir.p[1] < 0)
+		{
+			// negative direction:
+			// check yStart
+			f = (curN.yStart - position.p[1]) / dir.p[1];
+			tempx = f * dir.p[0] + position.p[0];
+			tempz = f * dir.p[2] + position.p[2];
+
+			// check if succesful
+			if (tempx > curN.xStart && tempx < curN.xEnd && tempz > curN.zStart && tempz < curN.zEnd)
+			{
+				// return the root if we would otherwise go outside of the root.
+				if (curN.yStart == treeRoot.yStart)
+					return treeRoot;
+
+				// return the right node
+				for (int axis = 0;; ++axis)
+				{
+					if (axis % 3 == 0)
+					{
+						// check x-axis
+						if (tempx < (*node.leftChild).xEnd)
+							node = *node.leftChild;
+						else
+							node = *node.rightChild;
+					}
+					else if (axis % 3 == 1)
+					{
+						// check y-axis
+						if ((*node.leftChild).yEnd >= curN.yStart)
+							node = *node.leftChild;
+						else
+							node = *node.rightChild;
+					}
+					else
+					{
+						// check z-axis
+						if (tempz < (*node.leftChild).zEnd)
+							node = *node.leftChild;
+						else
+							node = *node.rightChild;
+					}
+					if (node.leftChild == nullptr)
+						return node;
+				}
+			}
+		}
+		else
+		{
+			// positive direction:
+			// check yEnd
+			f = (curN.yEnd - position.p[1]) / dir.p[1];
+			tempx = f * dir.p[0] + position.p[0];
+			tempz = f * dir.p[2] + position.p[2];
+
+			// check if succesful
+			if (tempx > curN.xStart && tempx < curN.xEnd && tempz > curN.zStart && tempz < curN.zEnd)
+			{
+				// return the root if we would otherwise go outside of the root.
+				if (curN.yEnd == treeRoot.yEnd)
+					return treeRoot;
+
+				// return the right node
+				for (int axis = 0;; ++axis)
+				{
+					if (axis % 3 == 0)
+					{
+						// check x-axis
+						if (tempx < (*node.leftChild).xEnd)
+							node = *node.leftChild;
+						else
+							node = *node.rightChild;
+					}
+					else if (axis % 3 == 1)
+					{
+						// check y-axis
+						if ((*node.leftChild).yEnd <= curN.yEnd)
+							node = *node.rightChild;
+						else
+							node = *node.leftChild;
+					}
+					else
+					{
+						// check z-axis
+						if (tempz < (*node.leftChild).zEnd)
+							node = *node.leftChild;
+						else
+							node = *node.rightChild;
+					}
+					if (node.leftChild == nullptr)
+						return node;
+				}
+			}
+		}
+	}
+
+	// Check the x-y faces of the space
+	if (dir.p[2] != 0)
+	{
+		if (dir.p[2] < 0)
+		{
+			// negative direction:
+			// check yStart
+			f = (curN.zStart - position.p[2]) / dir.p[2];
+			tempx = f * dir.p[0] + position.p[0];
+			tempy = f * dir.p[1] + position.p[1];
+
+			// return the root if we would otherwise go outside of the root.
+			if (curN.zStart == treeRoot.zStart)
+				return treeRoot;
+
+			// return the right node
+			for (int axis = 0;; ++axis)
+			{
+				if (axis % 3 == 0)
+				{
+					// check x-axis
+					if (tempx < (*node.leftChild).xEnd)
+						node = *node.leftChild;
+					else
+						node = *node.rightChild;
+				}
+				else if (axis % 3 == 1)
+				{
+					// check y-axis
+					if (tempy < (*node.leftChild).yEnd)
+						node = *node.leftChild;
+					else
+						node = *node.rightChild;
+				}
+				else
+				{
+					// check z-axis
+					if ((*node.leftChild).zEnd >= curN.zStart)
+						node = *node.leftChild;
+					else
+						node = *node.rightChild;
+				}
+				if (node.leftChild == nullptr)
+					return node;
+			}
+		}
+		else
+		{
+			// positive direction:
+			// check yEnd
+			f = (curN.zEnd - position.p[2]) / dir.p[2];
+			tempx = f * dir.p[0] + position.p[0];
+			tempy = f * dir.p[1] + position.p[1];
+
+			// return the root if we would otherwise go outside of the root.
+			if (curN.zEnd == treeRoot.zEnd)
+				return treeRoot;
+
+			// return the right node
+			for (int axis = 0;; ++axis)
+			{
+				if (axis % 3 == 0)
+				{
+					// check x-axis
+					if (tempx < (*node.leftChild).xEnd)
+						node = *node.leftChild;
+					else
+						node = *node.rightChild;
+				}
+				else if (axis % 3 == 1)
+				{
+					// check y-axis
+					if (tempy < (*node.leftChild).yEnd)
+						node = *node.leftChild;
+					else
+						node = *node.rightChild;
+				}
+				else
+				{
+					// check z-axis
+					if ((*node.leftChild).zEnd <= curN.zEnd)
+						node = *node.rightChild;
+					else
+						node = *node.leftChild;
+				}
+				if (node.leftChild == nullptr)
+					return node;
+			}
+		}
+	}
+
+	return treeRoot;
+}
+
+inline bool contains(const std::vector<AccelTreeNode*> &vec, const AccelTreeNode &element)
+{
+	for (std::vector<AccelTreeNode*>::const_iterator it = vec.begin(); it != vec.end(); ++it)
+		if ((**it).xStart == element.xStart &&
+			(**it).yStart == element.yStart &&
+			(**it).zStart == element.zStart &&
+			(**it).xEnd == element.xEnd &&
+			(**it).yEnd == element.yEnd &&
+			(**it).zEnd == element.zEnd)
+		{
+			return true;
+		}
+	return false;
+}
+
+inline void projectOriginOnRoot(Vec3Df &origin, Vec3Df &dest)
+{
+	Vec3Df hitRoot = calculateProjectionOnRoot(origin, dest);
+
+	// avoid floating point error
+	// !!! NEEDS BETTER SOLUTION !!!
+	hitRoot += (dest / 1000.f);
+
+	dest += hitRoot - origin;
+	origin = hitRoot;
+}
+
+// If the camera is outside of the root, use this to move the origin inside of the root.
+// this function looks a lot like the findNodeBoxHitPoint function
+inline Vec3Df calculateProjectionOnRoot(Vec3Df &origin, Vec3Df &dest)
+{
+	float i, tempx, tempy, tempz;
+
+	// check y-z faces of the root
+	if (origin.p[0] != dest.p[0] && !(origin.p[0] > treeRoot.xStart && origin.p[0] < treeRoot.xEnd))
+	{
+		if (std::abs(treeRoot.xStart - origin.p[0]) < std::abs(treeRoot.xEnd - origin.p[0]))
+		{
+			// closer to xStart
+			tempx = treeRoot.xStart - origin.p[0];
+			i = tempx / (dest.p[0] - origin.p[0]);
+
+			tempy = i * (dest.p[1] - origin.p[1]) + origin.p[1];
+			tempz = i * (dest.p[2] - origin.p[2]) + origin.p[2];
+
+			// check if succesful
+			if (tempy > treeRoot.yStart && tempy < treeRoot.yEnd && tempz > treeRoot.zStart && tempz < treeRoot.zEnd)
+				return Vec3Df(treeRoot.xStart, tempy, tempz);
+		}
+		else
+		{
+			// closer to xEnd
+			tempx = treeRoot.xEnd - origin.p[0];
+			i = tempx / (dest.p[0] - origin.p[0]);
+
+			tempy = i * (dest.p[1] - origin.p[1]) + origin.p[1];
+			tempz = i * (dest.p[2] - origin.p[2]) + origin.p[2];
+
+			// check if succesful
+			if (tempy > treeRoot.yStart && tempy < treeRoot.yEnd && tempz > treeRoot.zStart && tempz < treeRoot.zEnd)
+				return Vec3Df(treeRoot.xEnd, tempy, tempz);
+		}
+	}
+
+	// check x-z faces of the root
+	if (origin.p[1] != dest.p[1] && !(origin.p[1] > treeRoot.yStart && origin.p[1] < treeRoot.yEnd))
+	{
+		if (std::abs(treeRoot.yStart - origin.p[1]) < std::abs(treeRoot.yEnd - origin.p[1]))
+		{
+			// closer to yStart
+			tempy = treeRoot.yStart - origin.p[1];
+			i = tempy / (dest.p[1] - origin.p[1]);
+
+			tempx = i * (dest.p[0] - origin.p[0]) + origin.p[0];
+			tempz = i * (dest.p[2] - origin.p[2]) + origin.p[2];
+
+			// check if succesful
+			if (tempx > treeRoot.xStart && tempx < treeRoot.xEnd && tempz > treeRoot.zStart && tempz < treeRoot.zEnd)
+				return Vec3Df(tempx, treeRoot.yStart, tempz);
+		}
+		else
+		{
+			// closer to yEnd
+			tempy = treeRoot.yEnd - origin.p[1];
+			i = tempy / (dest.p[1] - origin.p[1]);
+
+			tempx = i * (dest.p[0] - origin.p[0]) + origin.p[0];
+			tempz = i * (dest.p[2] - origin.p[2]) + origin.p[2];
+
+			// check if succesful
+			if (tempx > treeRoot.xStart && tempx < treeRoot.xEnd && tempz > treeRoot.zStart && tempz < treeRoot.zEnd)
+				return Vec3Df(tempx, treeRoot.yEnd, tempz);
+		}
+	}
+
+	// check x-y faces of the root
+	if (origin.p[2] != dest.p[2] && !(origin.p[2] > treeRoot.zStart && origin.p[2] < treeRoot.zEnd))
+	{
+		if (std::abs(treeRoot.zStart - origin.p[2]) < std::abs(treeRoot.zEnd - origin.p[2]))
+		{
+			// closer to zStart
+			tempz = treeRoot.zStart - origin.p[2];
+			i = tempz / (dest.p[2] - origin.p[2]);
+
+			if (tempx > treeRoot.xStart && tempx < treeRoot.xEnd && tempy > treeRoot.yStart && tempy < treeRoot.yEnd)
+				return Vec3Df(tempx, tempy, treeRoot.zStart);
+		}
+		else
+		{
+			// closer to zEnd
+			tempz = treeRoot.zEnd - origin.p[2];
+			i = tempz / (dest.p[2] - origin.p[2]);
+
+			tempx = i * (dest.p[0] - origin.p[0]) + origin.p[0];
+			tempy = i * (dest.p[1] - origin.p[1]) + origin.p[1];
+
+			if (tempx > treeRoot.xStart && tempx < treeRoot.xEnd && tempy > treeRoot.yStart && tempy < treeRoot.yEnd)
+				return Vec3Df(tempx, tempy, treeRoot.zEnd);
+		}
+	}
+
+	return origin;
 }

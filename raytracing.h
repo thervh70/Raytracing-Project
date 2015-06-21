@@ -41,12 +41,28 @@ struct Hitpair {
 	Material prev_material;
 };
 
-struct KDtreeCube {
+struct AccelTreeNode {
+	// A list of all parents of this node and this node (first: root, last: this node)
+	// Can be used to check which nodes you have traversed already while checking an adjacent node
+	// Tradeof: linear instead of logarithmic space complexity (around 3 * triangles bytes are needed)
+	// For a logarithmic speedup (around 0.32 ln(triangles) + 0.51 times faster than with logarithmic space complexity)
+	// As long as we don't use over 1 billion triangles, we should be fine.
+	std::vector<AccelTreeNode*> parentList;
+
+	// The left and right child of this node
+	// nullplt if there is no right child
+	AccelTreeNode *leftChild, *rightChild;
+
+	// The bounds defining the dimensions of the space of this node
+	// nullplt if there is no left child
 	float xStart, xEnd, yStart, yEnd, zStart, zEnd;
+
+	// The triangles contained in this node
 	std::vector<Triangle> triangles;
+
 	
-	// constructor
-	KDtreeCube(std::vector<Triangle> tri, float xS, float xE, float yS, float yE, float zS, float zE)
+	// Constructor with triangles
+	AccelTreeNode(std::vector<Triangle> tri, float xS, float xE, float yS, float yE, float zS, float zE)
 	{
 		triangles = tri;
 		xStart = xS;
@@ -57,8 +73,19 @@ struct KDtreeCube {
 		zEnd = zE;
 	}
 
+	// Constructor without triangles
+	AccelTreeNode(float xS, float xE, float yS, float yE, float zS, float zE)
+	{
+		xStart = xS;
+		xEnd = xE;
+		yStart = yS;
+		yEnd = yE;
+		zStart = zS;
+		zEnd = zE;
+	}
+
 	// basic constructor
-	KDtreeCube() {};
+	AccelTreeNode() {};
 };
 
 inline Hitpair checkHit(const Triangle & triangle, const Vec3Df & origin, const Vec3Df & dest, float minT);
@@ -66,7 +93,12 @@ inline Vec3Df calculateIntersectionPoint(const Vec3Df & rayOrigin, const Vec3Df 
 
 // KD tree functions
 void buildKDtree();
-std::vector<KDtreeCube> splitSpace(KDtreeCube cube, unsigned int axis, unsigned int minTriangles);
-void removeTrianglesNotInSubSpace(KDtreeCube cube);
+void splitSpaces(AccelTreeNode& tree, int axis);
+inline AccelTreeNode findChildNode(const AccelTreeNode &parent, int axis, const Vec3Df &position);
+inline AccelTreeNode findNextNode(const AccelTreeNode &curN, const Vec3Df &position, const Vec3Df &destination);
+//inline Vec3Df findNextNode(const AccelTreeNode &curN, const Vec3Df &position, const Vec3Df &destination);
+inline bool contains(const std::vector<AccelTreeNode*> &vec, const AccelTreeNode &element);
+inline void projectOriginOnRoot(Vec3Df &origin, Vec3Df &dest);
+inline Vec3Df calculateProjectionOnRoot(Vec3Df &origin, Vec3Df &dest);
 
 #endif

@@ -185,15 +185,17 @@ public:
         v[1] = t2.v[1];
         v[2] = t2.v[2];
 		t[0] = t2.t[0];
-		t[1] = t2.t[1];
-		t[2] = t2.t[2];
-		n[0] = t2.n[0];
-		n[1] = t2.n[1];
-		n[2] = t2.n[2];
+        t[1] = t2.t[1];
+        t[2] = t2.t[2];
 		normal = t2.normal;
-		return (*this);
+        return (*this);
     }
 	Vec3Df normal;
+	
+	inline bool operator== (const Triangle& t2)
+	{
+		return v[0] == t2.v[0] && v[1] == t2.v[1] && v[2] == t2.v[2];
+	}
 	//vertex indices
 	unsigned int v[3];
 	//texture coordinate
