@@ -203,7 +203,7 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 			resCol += material.Kd()*angle * diffusePower; // / distanceToLight;
 
 		// Self Shadows (Dark side of object
-		if (Vec3Df::dotProduct(lightDir, interpolatedNormal) <= 0) {
+		if (Vec3Df::dotProduct(lightDir, interpolatedNormal) <= 0.2f) {
 			resCol -= shadowRGB;
 		} else {
 			// Specular lighting
