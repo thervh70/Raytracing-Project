@@ -95,9 +95,9 @@ void buildKDtree();
 void splitSpaces(AccelTreeNode& tree, int axis);
 inline AccelTreeNode findChildNode(const AccelTreeNode &parent, int axis, const Vec3Df &position);
 inline AccelTreeNode findNextNode(const AccelTreeNode &curN, const Vec3Df &position, const Vec3Df &destination);
-//inline Vec3Df findNextNode(const AccelTreeNode &curN, const Vec3Df &position, const Vec3Df &destination);
 inline bool contains(const std::vector<AccelTreeNode*> &vec, const AccelTreeNode &element);
 inline void projectOriginOnRoot(Vec3Df &origin, Vec3Df &dest);
 inline Vec3Df calculateProjectionOnRoot(Vec3Df &origin, Vec3Df &dest);
+float calcBestSplit(AccelTreeNode &tree, int axis);
 
 #endif

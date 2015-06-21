@@ -9,7 +9,6 @@
 #include "Matrix33.h"
 #include "settings.h"
 
-
 struct TestRay {
 	Vec3Df origin;
 	Vec3Df destination;
@@ -35,6 +34,10 @@ AccelTreeNode treeRoot;
 bool builtAccelTree = false;
 int treeDepth = 0;
 int treeNodes = 1;
+
+// Set the tree accuracy (choose values like 10, 100, 1000).
+// only lower this if building the tree is taking too much time.
+float TREE_ACCURACY = 500.0f;
 
 //use this function for any preprocessing of the mesh.
 void init()
@@ -345,7 +348,7 @@ void yourKeyboardFunc(char t, int x, int y, const Vec3Df & rayOrigin, const Vec3
 		for (Vec3Df v : MyLightPositions) {
 			std::cout << "Light position: " << v << std::endl;
 		}
-
+		
 		std::cout << std::endl;
 		for (TestRay r : testRay) {
 			std::cout << "Origin      " << r.origin << std::endl;
@@ -462,13 +465,15 @@ void buildKDtree()
 
 	// Split the main node into smaller nodes
 	splitSpaces(treeRoot, 0);
+
 	std::cout << "... done building tree" << std::endl;
 	std::cout << "Tree depth: " << treeDepth << std::endl;
 	std::cout << "Amount of nodes: " << treeNodes << std::endl;
+	std::cout << "Amount of triangles: " << MyMesh.triangles.size() << std::endl;
 	std::cout << std::endl;
 }
 
-void splitSpaces(AccelTreeNode& tree, int axis) {
+void splitSpaces(AccelTreeNode& tree, const int axis) {
 
 	if (axis > treeDepth)
 		++treeDepth;
@@ -476,8 +481,8 @@ void splitSpaces(AccelTreeNode& tree, int axis) {
 
 	// split the KDtreeCube into subspaces and recursevily recall on those subspaces
 
-	// stop if there are 50 or less triangles in the current level (!!! 50 is randomly chosen !!!)
-	if (tree.triangles.size() < 51)
+	// stop if there are 10 or less triangles in the current level
+	if (tree.triangles.size() < 11)
 	{
 		tree.leftChild = nullptr;
 		tree.rightChild = nullptr;
@@ -485,10 +490,10 @@ void splitSpaces(AccelTreeNode& tree, int axis) {
 	}
 
 
-	// stop if subspace axis which is being divided is smaller than 0.01 (!!! 0.01 is randomly chosen !!!)
-	if ((axis % 3 == 0 && tree.xEnd - tree.xStart < 0.01) ||
-		(axis % 3 == 1 && tree.yEnd - tree.yStart < 0.01) ||
-		(tree.zEnd - tree.zStart < 0.01))
+	// stop if subspace axis which is being divided is smaller than 0.0001
+	if ((axis % 3 == 0 && tree.xEnd - tree.xStart < 0.0001) ||
+		(axis % 3 == 1 && tree.yEnd - tree.yStart < 0.0001) ||
+		(axis % 3 == 2 && tree.zEnd - tree.zStart < 0.0001))
 	{
 		tree.leftChild = nullptr;
 		tree.rightChild = nullptr;
@@ -500,10 +505,12 @@ void splitSpaces(AccelTreeNode& tree, int axis) {
 	
 	float mid;
 
-	// split the spacce in 2 smaller subspaces and recursively call this function on those subspaces
+	// calculate the best split out of 10 samples:
+	mid = calcBestSplit(tree, axis);
+
+	// split the space in 2 smaller subspaces and recursively call this function on those subspaces
 	if (axis % 3 == 0) {
 		//split x-axis
-		mid = (tree.xStart + tree.xEnd) / 2.0f;
 
 		// split the space in half
 		(*left) = AccelTreeNode(tree.xStart, mid, tree.yStart, tree.yEnd, tree.zStart, tree.zEnd);
@@ -511,15 +518,13 @@ void splitSpaces(AccelTreeNode& tree, int axis) {
 	}
 	else if (axis % 3 == 1) {
 		//split y-axis
-		mid = (tree.yStart + tree.yEnd) / 2.0f;
 
 		// split the space in half
 		(*left) = AccelTreeNode(tree.xStart, tree.xEnd, tree.yStart, mid, tree.zStart, tree.zEnd);
 		(*right) = AccelTreeNode(tree.xStart, tree.xEnd, mid, tree.yEnd, tree.zStart, tree.zEnd);
 	}
-	else if (axis % 3 == 2) {
+	else { //if (axis % 3 == 2) {
 		//split z-axis
-		mid = (tree.zStart + tree.zEnd) / 2.0f;
 
 		// split the space in half
 		(*left) = AccelTreeNode(tree.xStart, tree.xEnd, tree.yStart, tree.yEnd, tree.zStart, mid);
@@ -559,6 +564,66 @@ void splitSpaces(AccelTreeNode& tree, int axis) {
 	++treeNodes;
 	splitSpaces((*right), axis + 1);
 	++treeNodes;
+}
+
+float calcBestSplit(AccelTreeNode &tree, int axis)
+{
+	float mid;
+	float result;
+	float cost = std::numeric_limits<float>::max(), tempCost;
+
+	for (int i = 1; i < TREE_ACCURACY; ++i)
+	{
+		float leftSize, rightSize, totalSize;
+		
+		if (axis % 3 == 0) {
+			//split x-axis
+			mid = ((tree.xEnd - tree.xStart) * i / TREE_ACCURACY) + tree.xStart;
+			leftSize = mid - tree.xStart;
+			rightSize = tree.xEnd - mid;
+			totalSize = tree.xEnd - tree.xStart;
+		}
+		else if (axis % 3 == 1) {
+			//split y-axis
+			mid = ((tree.yEnd - tree.yStart) * i / TREE_ACCURACY) + tree.yStart;
+			leftSize = mid - tree.yStart;
+			rightSize = tree.yEnd - mid;
+			totalSize = tree.yEnd - tree.yStart;
+		}
+		else { //if (axis % 3 == 2) {
+			//split z-axis
+			mid = ((tree.zEnd - tree.zStart) * i / TREE_ACCURACY) + tree.zStart;
+			leftSize = mid - tree.zStart;
+			rightSize = tree.zEnd - mid;
+			totalSize = tree.zEnd - tree.zStart;
+		}
+
+		std::vector<Triangle> leftTri, rightTri, bothTri;
+
+		// calculate which triangles should be in the left, right, or both parts.
+		for (std::vector<Triangle>::const_iterator it = tree.triangles.begin(); it < tree.triangles.end(); ++it)
+		{
+			if (MyMesh.vertices[(*it).v[0]].p[axis % 3] < mid && MyMesh.vertices[(*it).v[1]].p[axis % 3] < mid &&
+				MyMesh.vertices[(*it).v[2]].p[axis % 3] < mid)
+				leftTri.push_back(*it);
+			else if (MyMesh.vertices[(*it).v[0]].p[axis % 3] > mid && MyMesh.vertices[(*it).v[1]].p[axis % 3] > mid &&
+				MyMesh.vertices[(*it).v[2]].p[axis % 3] > mid)
+				rightTri.push_back(*it);
+			else
+				bothTri.push_back(*it);
+		}
+		
+		tempCost = bothTri.size() * totalSize * 20.0f / axis + leftTri.size() * leftSize + rightTri.size() * rightSize;
+
+		if (tempCost < cost)
+		{
+			cost = tempCost;
+			result = mid;
+		}
+			
+	}
+
+	return result;
 }
 
 
