@@ -9,7 +9,8 @@ Ks 0.800000 0.800000 0.800000
 Ni 1.400000
 Tr 1.000000
 d 1.000000
-illum 3
+illum 2
+# illum should be 3, but is made 2 for testing.
 
 newmtl Reflection_Ball
 Ns 96.078431

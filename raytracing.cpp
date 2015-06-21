@@ -270,7 +270,21 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 		float sin2ThetaTransmitted = pow(refractIndex, 2) * (1 - (pow(cosThetaIncidence, 2)));
 
 		// The result is a transmitted ray, by using formula 1.
-		Vec3Df tRay = refractIndex * vIncidence + (refractIndex * cosThetaIncidence - sqrt(1 - sin2ThetaTransmitted)) * interpolatedNormal;
+		const Vec3Df tRay = refractIndex * vIncidence + (refractIndex * cosThetaIncidence - sqrt(1 - sin2ThetaTransmitted)) * interpolatedNormal,
+
+// Debug and Tracing
+			newOriginR = hitPoint + 0.001f * tRay,
+			newDestR = hitPoint + tRay;
+
+			if (debug)
+				testRay.push_back(TestRay(hitPoint, Vec3Df(), Vec3Df()));
+
+			Vec3Df newCol = performRayTracing(newOriginR, newDestR, ++k);
+			resCol = 0.5*resCol + 0.5*newCol;
+
+			if (debug)
+				testRay[k].color = newCol;
+//
 
 	}
 
@@ -414,6 +428,8 @@ inline Hitpair checkHit(const Triangle & triangle, const Vec3Df & origin, const 
 	// local variables
 	Vec3Df v0, v1, v2, vec1, vec2, dir = dest - origin;
 	Hitpair result;
+
+//prev_material = MyMesh ORIGIN
 
 	// Vertices of the triangle
 	v0 = MyMesh.vertices[triangle.v[0]].p;
