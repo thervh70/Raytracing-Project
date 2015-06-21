@@ -194,24 +194,24 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 		lightDir = v - hitPoint;
 		distanceToLight = lightDir.normalize();
 
-		halfwayVector = (lightDir + viewDir);
-		halfwayVector.normalize();
-
 		// Diffuse lighting
 		angle = Vec3Df::dotProduct(interpolatedNormal, lightDir); // cos(phi) = a . b / 1 / 1 (vectors are normalized)
 		if (angle > 0)
 			resCol += material.Kd()*angle * diffusePower; // / distanceToLight;
 
-		// Shadows
-		if (Vec3Df::dotProduct(lightDir, interpolatedNormal) <= 0.2) {
+		// Self Shadows (Dark side of object
+		if (Vec3Df::dotProduct(lightDir, interpolatedNormal) <= 0) {
 			resCol -= shadowRGB;
 		} else {
 			// Specular lighting
+			halfwayVector = (lightDir + viewDir);
+			halfwayVector.normalize();
 			angle = Vec3Df::dotProduct(interpolatedNormal, halfwayVector);
 			if (angle > 0)
 				resCol += material.Ks()*std::pow(angle, specularHighlight);
 
 			for (Triangle t : MyMesh.triangles) {
+				//Shadow casted by an object
 				shadowHit = checkHit(t, (hitPoint + 0.001f * lightDir), v, std::numeric_limits<float>::max());
 				if (shadowHit.bHit) {
 					resCol -= shadowRGB;
