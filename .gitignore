@@ -6,7 +6,7 @@ Release/Raytraci*
 Release/*.obj
 
 Personal/*.*
-
+Setup/*.*
 .vs/*
 
 config.h
