@@ -221,7 +221,8 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k, floa
 	}
 
 	// These are the indices of refraction.
-	// n1 is the material from where the ray comes from, which is the Ni value if it has a Ni value, else float 1.
+	// n1 is the material from where the ray comes from, which is the Ni value of the previous hitPoint,
+	// if it has a Ni value, else float 1 (standard for air).
 	float n1 = (prev_Ni != 0.0f) ? prev_Ni : 1.0f;
 	// n2 is the material of the hitPoint, which is the Ni value if it has a Ni value, else float 1.
 	float n2 = (material.has_Ni()) ? material.Ni() : 1.0f;
@@ -272,6 +273,9 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k, floa
 // Debug and Tracing
 			newOriginR = hitPoint + 0.001f * tRay,
 			newDestR = hitPoint + tRay;
+			
+		// Important: only shoot the tRay if the angle is smaller than the critical angle.
+		if (sin2ThetaTransmitted <= 1) {
 
 			if (debug)
 				testRay.push_back(TestRay(hitPoint, Vec3Df(), Vec3Df()));
@@ -281,6 +285,7 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k, floa
 
 			if (debug)
 				testRay[k].color = newCol;
+		}
 //
 
 	}
