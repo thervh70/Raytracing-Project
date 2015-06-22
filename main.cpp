@@ -286,18 +286,20 @@ double RayTracer::doDaRayTracingShizz() {
 	tend[n - 1] = WindowSize_Y;
 
 	int currpx;
+	int prevpx;
+	int pxpersec;
 	int totalsize = WindowSize_X * WindowSize_Y;
 	do {
 		//print progress once per second
 		Sleep(1000);
+		prevpx = currpx;
 		currpx = 0;
 		for (int j = 0; j < n; ++j)
 			currpx += pixelsdone[j];
 
-		clock_t now = clock();
-		double elapsed   = double(now - begin);
-		double totaltime = double(totalsize) / double(currpx) * elapsed;
-		double remaining = (totaltime - elapsed) / CLOCKS_PER_SEC;
+		int newspeed = (currpx - prevpx);
+		pxpersec = 0.75 * pxpersec + 0.25 * newspeed;
+		double remaining = (double)(totalsize - currpx) / (double)(pxpersec);
 		int r = (int)round(remaining);
 
 		printf("\n%3d%%\tPixel %8d/%8d  %5d s remaining", 100 * currpx / totalsize, currpx, totalsize, r);
