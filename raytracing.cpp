@@ -111,11 +111,26 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k, floa
 			angle = Vec3Df::dotProduct(interpolatedNormal, halfwayVector);
 			if (angle > 0)
 				resCol += hit.material.Ks()*std::pow(angle, specularHighlight);
-
+			
 			//Shadow casted by an object
-			shadowHit = checkHit((hit.hitPoint + 0.001f * lightDir), v);
-			if (shadowHit.bHit) {
-				resCol -= shadowRGB;
+			if (shadowSamples <= 1) {
+				if (checkHit((hit.hitPoint + 0.001f * lightDir), v).bHit)
+					resCol -= shadowRGB;
+			}
+			if (shadowSamples > 1) {
+				// The + 0.000...0001f prevents the compiler saying "divide by zero"
+				float delta = 2.f / (float)(shadowSamples - 1 + 0.000000000000000000001f);
+				for (float x = -1.f; x <= 1.f; x += delta)
+				for (float y = -1.f; y <= 1.f; y += delta)
+				for (float z = -1.f; z <= 1.f; z += delta) {
+					float rx = delta * (double)rand() / (double)RAND_MAX - delta / 2.f;
+					float ry = delta * (double)rand() / (double)RAND_MAX - delta / 2.f;
+					float rz = delta * (double)rand() / (double)RAND_MAX - delta / 2.f;
+					shadowHit = checkHit((hit.hitPoint + 0.001f * lightDir), v + Vec3Df(x*shadowRadius + rx, y*shadowRadius + ry, z*shadowRadius + rz));
+					if (shadowHit.bHit) {
+						resCol -= shadowRGB / shadowSamples / shadowSamples / shadowSamples;
+					}
+				}
 			}
 		}
 	}

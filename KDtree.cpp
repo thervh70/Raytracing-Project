@@ -9,7 +9,7 @@ int treeNodes = 1;
 
 // Set the tree accuracy (choose values like 10, 100, 1000).
 // only lower this if building the tree is taking too much time.
-float TREE_ACCURACY = 10.0f;
+float TREE_ACCURACY = 1000.0f;
 
 // Build a KD tree and store the planes with the triangles in a vector of vectors
 void buildKDtree()
