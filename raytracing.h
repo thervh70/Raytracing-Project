@@ -36,6 +36,7 @@ void yourKeyboardFunc(char t, int x, int y, const Vec3Df & rayOrigin, const Vec3
 
 struct Hitpair {
 	bool bHit;
+	//res = [a, b, t]
 	Vec3Df res;
 	Vec3Df hitPoint;
 };
