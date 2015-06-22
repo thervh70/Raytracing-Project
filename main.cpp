@@ -416,7 +416,7 @@ Vec3Df RayTracer::raytrace(double x, double y)
 		(1 - yscale)*(xscale*dest01 + (1 - xscale)*dest11);
 
 	//launch raytracing for the given ray.
-	return performRayTracing(origin, dest, 0);
+	return performRayTracing(origin, dest, 0, 1.0f);
 }
 
 //transform the x, y position on the screen into the corresponding 3D world position

@@ -51,7 +51,7 @@ void init()
 }
 
 //return the color of your pixel.
-Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
+Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k, float prev_Ni)
 {
 	if (k > 5) return endOfReflection;
 
@@ -120,6 +120,13 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 		}
 	}
 
+	// These are the indices of refraction.
+	// n1 is the material from where the ray comes from, which is the Ni value of the previous hitPoint,
+	// if it has a Ni value, else float 1 (standard for air).
+	float n1 = (prev_Ni != 0.0f) ? prev_Ni : 1.0f;
+	// n2 is the material of the hitPoint, which is the Ni value if it has a Ni value, else float 1.
+	float n2 = (hit.material.has_Ni()) ? hit.material.Ni() : 1.0f;
+
 	if (hit.material.illum() == 3) {
 
 		// reflectdir = dir_of_ray - 2 * ray_projected_on_normal
@@ -130,11 +137,71 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 		if (debug)
 			testRay.push_back(TestRay(hit.hitPoint, Vec3Df(), Vec3Df()));
 
-		Vec3Df newCol = performRayTracing(newOrigin, newDest, ++k);
+		Vec3Df newCol = performRayTracing(newOrigin, newDest, ++k, n2);
 		resCol = 0.5*resCol + 0.5*newCol;
 
 		if (debug)
 			testRay[k].color = newCol;
+	}
+
+	// Normalized viewing vector, 
+	// which will be considered as the vector of incidence.
+	Vec3Df vIncidence = dir;
+	vIncidence.normalize();
+
+	// If the refraction index of a material is greater than 1, 
+	// then refraction has to be taken into account.
+	if (hit.material.Ni() > 1.0f) {
+		// Transmission Ray calculation using a simplified version of the gigantic formula given in the slides:
+		// (1); tRay = n1/n2 * vIncidence + ( n1/n2 * cos(thetaIncidence) - sqrt(1 - sin^2(thetaTransmitted) ) ) * normal.
+		// with (2); sin^2(thetaTransmitted) = (n1/n2)^2 * (1 - cos^2(thetaIncidence))
+
+		// Refractionindex is based on the division of the two refractive indices 
+		// of the involved materials.
+		float refractIndex = (n1 != n2) ? n2 : (1 / n2);
+
+		// Cos(Theta) with theta as the angle of incidence calculation, by
+		// calculating the dotProduct of the vector of indence and the normal of the hitPoint.
+		float cosThetaIncidence = Vec3Df::dotProduct(vIncidence, interpolatedNormal);
+
+		// Sin^2(Theta) calculation, with theta as the angle of transmittance, by using formula 2.
+		float sin2ThetaTransmitted = pow(refractIndex, 2) * (1 - (pow(cosThetaIncidence, 2)));
+
+		// Important: only shoot the tRay if the angle is smaller than the critical angle.
+		if (sin2ThetaTransmitted <= 1) {
+			// The result is a transmitted ray, by using formula 1.
+			const Vec3Df tRay = refractIndex * vIncidence + (refractIndex * cosThetaIncidence - sqrt(1 - sin2ThetaTransmitted)) * interpolatedNormal,
+				newOriginR = hit.hitPoint + 0.001f * tRay,
+				newDestR = hit.hitPoint + tRay;
+
+			// Debug and Tracing		
+			if (debug)
+				testRay.push_back(TestRay(hit.hitPoint, Vec3Df(), Vec3Df()));
+
+			Vec3Df newCol = performRayTracing(newOriginR, newDestR, ++k, n2);
+			resCol = 0.3*resCol + 0.7*newCol;
+
+			if (debug)
+				testRay[k].color = newCol;
+
+		}
+		else {
+			// The result is just a reflected ray.
+			const Vec3Df refRay = vIncidence - 2 * Vec3Df::dotProduct(vIncidence, interpolatedNormal) * interpolatedNormal,
+				newOriginR = hit.hitPoint + 0.001f * refRay,
+				newDestR = hit.hitPoint + refRay;
+
+			// Debug and Tracing		
+			if (debug)
+				testRay.push_back(TestRay(hit.hitPoint, Vec3Df(), Vec3Df()));
+
+			Vec3Df newCol = performRayTracing(newOriginR, newDestR, ++k, n2);
+			resCol = 0.5*resCol + 0.5*newCol;
+
+			if (debug)
+				testRay[k].color = newCol;
+
+		}
 	}
 
 	return resCol;
@@ -342,7 +409,7 @@ void yourKeyboardFunc(char t, int x, int y, const Vec3Df & rayOrigin, const Vec3
 		testRay[0].destination = rayDestination;
 
 		// make the ray the color of the intersection point (and slightly brighter)
-		testRay[0].color = performRayTracing(testRay[0].origin, testRay[0].destination, 0);
+		testRay[0].color = performRayTracing(testRay[0].origin, testRay[0].destination, 0, 0.0f);
 
 		std::cout << "Test ray trace:" << std::endl;
 
