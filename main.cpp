@@ -54,6 +54,7 @@ public:
 		produceRay(WindowSize_X - 1, 0, &origin10, &dest10);
 		produceRay(WindowSize_X - 1, WindowSize_Y - 1, &origin11, &dest11);
 	};
+	Vec3Df raytrace(double x, double y);
 	static void produceRay(int x_I, int y_I, Vec3Df * origin, Vec3Df * dest);
 	void threadmethod(int threadID);
 	double doDaRayTracingShizz();
@@ -324,19 +325,41 @@ void RayTracer::threadmethod(int threadID)
 		// Perform raytracing on the line
 		for (unsigned int x = 0; x < WindowSize_X; ++x)
 		{
-			Vec3Df origin, dest;
-			//produce the rays for each pixel, by interpolating 
-			//the four rays of the frustum corners.
-			float xscale = 1.0f - float(x) / (WindowSize_X - 1);
-			float yscale = 1.0f - float(y) / (WindowSize_Y - 1);
+			Vec3Df rgb = raytrace(x, y);
+			if (rgb != backgroundColor) {
+				// MSAA is done using a rotated (square) grid,
+				// and can therefore only be 4x or 16x.
+				switch (MSAA) {
+				case 4:
+					rgb  = raytrace(x - 1. / 8., y - 3. / 8.);	// +#++
+					rgb += raytrace(x + 3. / 8., y - 1. / 8.);	// +++#
+					rgb += raytrace(x - 3. / 8., y + 1. / 8.);	// #+++
+					rgb += raytrace(x + 1. / 8., y + 3. / 8.);	// ++#+
+					rgb /= 4;
+					break;
+				case 16:
+					rgb  = raytrace(x -  9. / 32., y - 15. / 32.);	// +++#++++ ++++++++
+					rgb += raytrace(x -  1. / 32., y - 13. / 32.);	// +++++++# ++++++++
+					rgb += raytrace(x +  7. / 32., y - 11. / 32.);	// ++++++++ +++#++++
+					rgb += raytrace(x + 15. / 32., y -  9. / 32.);	// ++++++++ +++++++#
+					rgb += raytrace(x - 11. / 32., y -  7. / 32.);	// ++#+++++ ++++++++
+					rgb += raytrace(x -  3. / 32., y -  5. / 32.);	// ++++++#+ ++++++++
+					rgb += raytrace(x +  5. / 32., y -  3. / 32.);	// ++++++++ ++#+++++
+					rgb += raytrace(x + 13. / 32., y -  1. / 32.);	// ++++++++ ++++++#+
 
-			origin = yscale*(xscale*origin00 + (1 - xscale)*origin10) +
-				(1 - yscale)*(xscale*origin01 + (1 - xscale)*origin11);
-			dest = yscale*(xscale*dest00 + (1 - xscale)*dest10) +
-				(1 - yscale)*(xscale*dest01 + (1 - xscale)*dest11);
+					rgb += raytrace(x - 13. / 32., y +  1. / 32.);	// +#++++++ ++++++++
+					rgb += raytrace(x -  5. / 32., y +  3. / 32.);	// +++++#++ ++++++++
+					rgb += raytrace(x +  3. / 32., y +  5. / 32.);	// ++++++++ +#++++++
+					rgb += raytrace(x + 11. / 32., y +  7. / 32.);	// ++++++++ +++++#++
+					rgb += raytrace(x - 15. / 32., y +  9. / 32.);	// #+++++++ ++++++++
+					rgb += raytrace(x -  7. / 32., y + 11. / 32.);	// ++++#+++ ++++++++
+					rgb += raytrace(x +  1. / 32., y + 13. / 32.);	// ++++++++ #+++++++
+					rgb += raytrace(x +  9. / 32., y + 15. / 32.);	// ++++++++ ++++#+++
+					rgb /= 16.;
+					break;
+				}
+			}
 
-			//launch raytracing for the given ray.
-			Vec3Df rgb = performRayTracing(origin, dest, 0);
 			//store the result in an image 
 			result.setPixel(x, y, RGBValue(rgb[0], rgb[1], rgb[2]));
 			++pixelsdone[threadID];
@@ -367,6 +390,23 @@ void RayTracer::threadmethod(int threadID)
 		}
 	}
 	printf("   %d done", threadID + 1);
+}
+//perform the raytracing for one x/y position
+Vec3Df RayTracer::raytrace(double x, double y)
+{
+	Vec3Df origin, dest;
+	//produce the rays for each pixel, by interpolating 
+	//the four rays of the frustum corners.
+	double xscale = 1.0 - x / (double)(WindowSize_X - 1);
+	double yscale = 1.0 - y / (double)(WindowSize_Y - 1);
+
+	origin = yscale*(xscale*origin00 + (1 - xscale)*origin10) +
+		(1 - yscale)*(xscale*origin01 + (1 - xscale)*origin11);
+	dest = yscale*(xscale*dest00 + (1 - xscale)*dest10) +
+		(1 - yscale)*(xscale*dest01 + (1 - xscale)*dest11);
+
+	//launch raytracing for the given ray.
+	return performRayTracing(origin, dest, 0);
 }
 
 //transform the x, y position on the screen into the corresponding 3D world position
