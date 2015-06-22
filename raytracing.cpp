@@ -267,8 +267,6 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k, floa
 		// Sin^2(Theta) calculation, with theta as the angle of transmittance, by using formula 2.
 		float sin2ThetaTransmitted = pow(refractIndex, 2) * (1 - (pow(cosThetaIncidence, 2)));
 
-		Vec3Df newOriginR, newDestR;
-
 		// Important: only shoot the tRay if the angle is smaller than the critical angle.
 		if (sin2ThetaTransmitted <= 1) {
 			// The result is a transmitted ray, by using formula 1.
@@ -305,7 +303,6 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k, floa
 
 		}
 	}
-
 
 	// f(x,y) = (1 - x)*v1 + (x - y)*v2 + y*v3
 
