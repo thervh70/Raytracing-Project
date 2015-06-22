@@ -315,12 +315,12 @@ double RayTracer::doDaRayTracingShizz() {
 	return elapsed_secs;
 }
 
-void RayTracer::threadmethod(int threadID) {
+void RayTracer::threadmethod(int threadID)
+{
 	bool done = false;
 	unsigned y = tcurrent[threadID];
 	while (!done)
 	{
-		linedone[y] = true;
 		// Perform raytracing on the line
 		for (unsigned int x = 0; x < WindowSize_X; ++x)
 		{
@@ -344,8 +344,10 @@ void RayTracer::threadmethod(int threadID) {
 		result.writeImageBMP("result.bmp", 0, y, result._width, 1);
 
 		// search for next line to do
-		y = ++tcurrent[threadID];
-		if (tcurrent[threadID] >= tend[threadID]) {
+		if (!linedone[tcurrent[threadID] + 1]) {
+			linedone[++tcurrent[threadID]] = true;
+			++y;
+		} else {
 			done = true;
 
 			std::vector<int> randomlist;
