@@ -27,6 +27,9 @@
     <ClCompile Include="raytracing.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="KDtree.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="imageWriter.h">
@@ -69,6 +72,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="settings.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="KDtree.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

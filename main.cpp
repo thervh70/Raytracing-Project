@@ -285,9 +285,9 @@ double RayTracer::doDaRayTracingShizz() {
 	// make sure the last thread won't get out of bounds
 	tend[n - 1] = WindowSize_Y;
 
-	int currpx;
-	int prevpx;
-	int pxpersec;
+	int currpx = 0;
+	int prevpx = 0;
+	int pxpersec = 0;
 	int totalsize = WindowSize_X * WindowSize_Y;
 	do {
 		//print progress once per second
@@ -323,6 +323,7 @@ void RayTracer::threadmethod(int threadID)
 {
 	bool done = false;
 	unsigned y = tcurrent[threadID];
+	linedone[y] = true;
 	while (!done)
 	{
 		// Perform raytracing on the line

@@ -40,6 +40,7 @@
   <ItemDefinitionGroup>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="KDtree.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mesh.cpp" />
     <ClCompile Include="raytracing.cpp" />
@@ -51,6 +52,7 @@
     <ClInclude Include="include\GL\freeglut_ext.h" />
     <ClInclude Include="include\GL\freeglut_std.h" />
     <ClInclude Include="include\GL\glut.h" />
+    <ClInclude Include="KDtree.h" />
     <ClInclude Include="matrix.h" />
     <ClInclude Include="Matrix33.h" />
     <ClInclude Include="mesh.h" />
