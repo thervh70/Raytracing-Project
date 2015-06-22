@@ -54,7 +54,7 @@ public:
 		produceRay(WindowSize_X - 1, 0, &origin10, &dest10);
 		produceRay(WindowSize_X - 1, WindowSize_Y - 1, &origin11, &dest11);
 	};
-	Vec3Df raytrace(double x, double y);
+	Vec3Df raytrace(double x, double y, float &depth);
 	static void produceRay(int x_I, int y_I, Vec3Df * origin, Vec3Df * dest);
 	void threadmethod(int threadID);
 	double doDaRayTracingShizz();
@@ -316,6 +316,14 @@ double RayTracer::doDaRayTracingShizz() {
 	return elapsed_secs;
 }
 
+void depthIncrease(float &depth, float &depthHolder, int &hitNumber) {
+	if (depthHolder != std::numeric_limits<float>::max()) {
+		depth += depthHolder;
+		++hitNumber;
+	}
+}
+
+
 void RayTracer::threadmethod(int threadID)
 {
 	bool done = false;
@@ -325,43 +333,73 @@ void RayTracer::threadmethod(int threadID)
 		// Perform raytracing on the line
 		for (unsigned int x = 0; x < WindowSize_X; ++x)
 		{
+			float depth, depthHolder;
+			int hitNumber = 0;
 			Vec3Df rgb = raytrace(x, y);
 			if (rgb != backgroundColor) {
 				// MSAA is done using a rotated (square) grid,
 				// and can therefore only be 4x or 16x.
 				switch (MSAA) {
 				case 4:
-					rgb  = raytrace(x - 1. / 8., y - 3. / 8.);	// +#++
-					rgb += raytrace(x + 3. / 8., y - 1. / 8.);	// +++#
-					rgb += raytrace(x - 3. / 8., y + 1. / 8.);	// #+++
-					rgb += raytrace(x + 1. / 8., y + 3. / 8.);	// ++#+
+					rgb  = raytrace(x - 1. / 8., y - 3. / 8., depthHolder);	// +#++
+					depthIncrease(depth, depthHolder, hitNumber);
+					rgb += raytrace(x + 3. / 8., y - 1. / 8., depthHolder);	// +++#
+					depthIncrease(depth, depthHolder, hitNumber);
+					rgb += raytrace(x - 3. / 8., y + 1. / 8., depthHolder);	// #+++
+					depthIncrease(depth, depthHolder, hitNumber);
+					rgb += raytrace(x + 1. / 8., y + 3. / 8., depthHolder);	// ++#+
+					depthIncrease(depth, depthHolder, hitNumber);
 					rgb /= 4;
+					if (hitNumber > 0)
+						depth /= hitNumber;
+					else
+						depth = std::numeric_limits<float>::max();
 					break;
 				case 16:
-					rgb  = raytrace(x -  9. / 32., y - 15. / 32.);	// +++#++++ ++++++++
-					rgb += raytrace(x -  1. / 32., y - 13. / 32.);	// +++++++# ++++++++
-					rgb += raytrace(x +  7. / 32., y - 11. / 32.);	// ++++++++ +++#++++
-					rgb += raytrace(x + 15. / 32., y -  9. / 32.);	// ++++++++ +++++++#
-					rgb += raytrace(x - 11. / 32., y -  7. / 32.);	// ++#+++++ ++++++++
-					rgb += raytrace(x -  3. / 32., y -  5. / 32.);	// ++++++#+ ++++++++
-					rgb += raytrace(x +  5. / 32., y -  3. / 32.);	// ++++++++ ++#+++++
-					rgb += raytrace(x + 13. / 32., y -  1. / 32.);	// ++++++++ ++++++#+
+					rgb  = raytrace(x -  9. / 32., y - 15. / 32., depthHolder);	// +++#++++ ++++++++
+					depthIncrease(depth, depthHolder, hitNumber);
+					rgb += raytrace(x -  1. / 32., y - 13. / 32., depthHolder);	// +++++++# ++++++++
+					depthIncrease(depth, depthHolder, hitNumber);
+					rgb += raytrace(x +  7. / 32., y - 11. / 32., depthHolder);	// ++++++++ +++#++++
+					depthIncrease(depth, depthHolder, hitNumber);
+					rgb += raytrace(x + 15. / 32., y -  9. / 32., depthHolder);	// ++++++++ +++++++#
+					depthIncrease(depth, depthHolder, hitNumber);
+					rgb += raytrace(x - 11. / 32., y -  7. / 32., depthHolder);	// ++#+++++ ++++++++
+					depthIncrease(depth, depthHolder, hitNumber);
+					rgb += raytrace(x -  3. / 32., y -  5. / 32., depthHolder);	// ++++++#+ ++++++++
+					depthIncrease(depth, depthHolder, hitNumber);
+					rgb += raytrace(x +  5. / 32., y -  3. / 32., depthHolder);	// ++++++++ ++#+++++
+					depthIncrease(depth, depthHolder, hitNumber);
+					rgb += raytrace(x + 13. / 32., y -  1. / 32., depthHolder);	// ++++++++ ++++++#+
+					depthIncrease(depth, depthHolder, hitNumber);
 
-					rgb += raytrace(x - 13. / 32., y +  1. / 32.);	// +#++++++ ++++++++
-					rgb += raytrace(x -  5. / 32., y +  3. / 32.);	// +++++#++ ++++++++
-					rgb += raytrace(x +  3. / 32., y +  5. / 32.);	// ++++++++ +#++++++
-					rgb += raytrace(x + 11. / 32., y +  7. / 32.);	// ++++++++ +++++#++
-					rgb += raytrace(x - 15. / 32., y +  9. / 32.);	// #+++++++ ++++++++
-					rgb += raytrace(x -  7. / 32., y + 11. / 32.);	// ++++#+++ ++++++++
-					rgb += raytrace(x +  1. / 32., y + 13. / 32.);	// ++++++++ #+++++++
-					rgb += raytrace(x +  9. / 32., y + 15. / 32.);	// ++++++++ ++++#+++
+					rgb += raytrace(x - 13. / 32., y +  1. / 32., depthHolder);	// +#++++++ ++++++++
+					depthIncrease(depth, depthHolder, hitNumber);
+					rgb += raytrace(x -  5. / 32., y +  3. / 32., depthHolder);	// +++++#++ ++++++++
+					depthIncrease(depth, depthHolder, hitNumber);
+					rgb += raytrace(x +  3. / 32., y +  5. / 32., depthHolder);	// ++++++++ +#++++++
+					depthIncrease(depth, depthHolder, hitNumber);
+					rgb += raytrace(x + 11. / 32., y +  7. / 32., depthHolder);	// ++++++++ +++++#++
+					depthIncrease(depth, depthHolder, hitNumber);
+					rgb += raytrace(x - 15. / 32., y +  9. / 32., depthHolder);	// #+++++++ ++++++++
+					depthIncrease(depth, depthHolder, hitNumber);
+					rgb += raytrace(x -  7. / 32., y + 11. / 32., depthHolder);	// ++++#+++ ++++++++
+					depthIncrease(depth, depthHolder, hitNumber);
+					rgb += raytrace(x +  1. / 32., y + 13. / 32., depthHolder);	// ++++++++ #+++++++
+					depthIncrease(depth, depthHolder, hitNumber);
+					rgb += raytrace(x +  9. / 32., y + 15. / 32., depthHolder);	// ++++++++ ++++#+++
+					depthIncrease(depth, depthHolder, hitNumber);
 					rgb /= 16.;
+					if (hitNumber > 0)
+						depth /= hitNumber;
+					else
+						depth = std::numeric_limits<float>::max();
 					break;
 				}
 			}
 
 			//store the result in an image 
-			result.setPixel(x, y, RGBValue(rgb[0], rgb[1], rgb[2]));
+			result.setPixel(x, y, RGBValue(rgb[0], rgb[1], rgb[2]), depth);
 			++pixelsdone[threadID];
 		}
 		result.writeImageBMP("result.bmp", 0, y, result._width, 1);
@@ -392,7 +430,7 @@ void RayTracer::threadmethod(int threadID)
 	printf("   %d done", threadID + 1);
 }
 //perform the raytracing for one x/y position
-Vec3Df RayTracer::raytrace(double x, double y)
+Vec3Df RayTracer::raytrace(double x, double y, float &depth)
 {
 	Vec3Df origin, dest;
 	//produce the rays for each pixel, by interpolating 
@@ -406,7 +444,7 @@ Vec3Df RayTracer::raytrace(double x, double y)
 		(1 - yscale)*(xscale*dest01 + (1 - xscale)*dest11);
 
 	//launch raytracing for the given ray.
-	return performRayTracing(origin, dest, 0);
+	return performRayTracing(origin, dest, 0, depth);
 }
 
 //transform the x, y position on the screen into the corresponding 3D world position

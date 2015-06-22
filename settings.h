@@ -9,7 +9,7 @@ const float diffusePower = 1.5f;
 //const float specularHardness = 67.f; // this is stored in the .mtl file
 const float ShadowFactor = 0.5f;
 
-const int MSAA = 16; //valid: 1, 4, 16; default: 1
+const int MSAA = 1; //valid: 1, 4, 16; default: 1
 
 #define backgroundColor Vec3Df(0.2f, 0.5f, 1.0f)
 #define endOfReflection Vec3Df(0.0f, 0.0f, 0.0f)

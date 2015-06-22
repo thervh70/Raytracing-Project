@@ -82,13 +82,15 @@ public:
 	: _width(width)
 	, _height(height)
 	{
-		_image.resize(3*_width*_height);
+		_image.resize(3 * _width*_height);
+		_depth.resize(_width*_height);
 	}
-	void setPixel(int i, int j, const RGBValue & rgb)
+	void setPixel(int i, int j, const RGBValue & rgb, float depth)
 	{
 		_image[3*(_width*j+i)]=rgb[0];
 		_image[3*(_width*j+i)+1]=rgb[1];
 		_image[3*(_width*j+i)+2]=rgb[2];
+		_depth[_width*j + i] = depth;
 	}
 	void setSize(int w, int h) {
 		_width = w;
@@ -96,7 +98,28 @@ public:
 		_image.resize(3 * w*h);
 	}
 
+	void getDepthRange(float &lowest, float &highest) {
+		lowest = std::numeric_limits<float>::max();
+		highest = 0;
+
+		for (int i; i < _width*_height; i++) {
+			lowest = std::min(lowest, _depth[i]);
+			highest = std::max(highest, _depth[i]);
+		}
+	}
+
+	void normailzeDepthRange() {
+		float lowest, denom;
+		getDepthRange(lowest, denom);
+		denom -= lowest;
+
+		for (int i; i < _width*_height; i++) {
+			_depth[i] = (_depth[i] - lowest) / denom;
+		}
+	}
+
 	std::vector<float> _image;
+	std::vector<float> _depth;
 	int _width;
 	int _height;
 
