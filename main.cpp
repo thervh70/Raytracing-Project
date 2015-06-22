@@ -54,8 +54,9 @@ public:
 		produceRay(WindowSize_X - 1, 0, &origin10, &dest10);
 		produceRay(WindowSize_X - 1, WindowSize_Y - 1, &origin11, &dest11);
 	};
-	Vec3Df raytrace(double x, double y);
 	static void produceRay(int x_I, int y_I, Vec3Df * origin, Vec3Df * dest);
+	Vec3Df raytrace(double x, double y);
+	Vec3Df raytraceMSAA(int x, int y);
 	void threadmethod(int threadID);
 	double doDaRayTracingShizz();
 private:
@@ -325,40 +326,7 @@ void RayTracer::threadmethod(int threadID)
 		// Perform raytracing on the line
 		for (unsigned int x = 0; x < WindowSize_X; ++x)
 		{
-			Vec3Df rgb = raytrace(x, y);
-			if (rgb != backgroundColor) {
-				// MSAA is done using a rotated (square) grid,
-				// and can therefore only be 4x or 16x.
-				switch (MSAA) {
-				case 4:
-					rgb  = raytrace(x - 1. / 8., y - 3. / 8.);	// +#++
-					rgb += raytrace(x + 3. / 8., y - 1. / 8.);	// +++#
-					rgb += raytrace(x - 3. / 8., y + 1. / 8.);	// #+++
-					rgb += raytrace(x + 1. / 8., y + 3. / 8.);	// ++#+
-					rgb /= 4;
-					break;
-				case 16:
-					rgb  = raytrace(x -  9. / 32., y - 15. / 32.);	// +++#++++ ++++++++
-					rgb += raytrace(x -  1. / 32., y - 13. / 32.);	// +++++++# ++++++++
-					rgb += raytrace(x +  7. / 32., y - 11. / 32.);	// ++++++++ +++#++++
-					rgb += raytrace(x + 15. / 32., y -  9. / 32.);	// ++++++++ +++++++#
-					rgb += raytrace(x - 11. / 32., y -  7. / 32.);	// ++#+++++ ++++++++
-					rgb += raytrace(x -  3. / 32., y -  5. / 32.);	// ++++++#+ ++++++++
-					rgb += raytrace(x +  5. / 32., y -  3. / 32.);	// ++++++++ ++#+++++
-					rgb += raytrace(x + 13. / 32., y -  1. / 32.);	// ++++++++ ++++++#+
-
-					rgb += raytrace(x - 13. / 32., y +  1. / 32.);	// +#++++++ ++++++++
-					rgb += raytrace(x -  5. / 32., y +  3. / 32.);	// +++++#++ ++++++++
-					rgb += raytrace(x +  3. / 32., y +  5. / 32.);	// ++++++++ +#++++++
-					rgb += raytrace(x + 11. / 32., y +  7. / 32.);	// ++++++++ +++++#++
-					rgb += raytrace(x - 15. / 32., y +  9. / 32.);	// #+++++++ ++++++++
-					rgb += raytrace(x -  7. / 32., y + 11. / 32.);	// ++++#+++ ++++++++
-					rgb += raytrace(x +  1. / 32., y + 13. / 32.);	// ++++++++ #+++++++
-					rgb += raytrace(x +  9. / 32., y + 15. / 32.);	// ++++++++ ++++#+++
-					rgb /= 16.;
-					break;
-				}
-			}
+			Vec3Df rgb = raytraceMSAA(x, y);
 
 			//store the result in an image 
 			result.setPixel(x, y, RGBValue(rgb[0], rgb[1], rgb[2]));
@@ -391,6 +359,45 @@ void RayTracer::threadmethod(int threadID)
 	}
 	printf("   %d done", threadID + 1);
 }
+
+Vec3Df RayTracer::raytraceMSAA(int x, int y) {
+	Vec3Df rgb = raytrace(x, y);
+	if (rgb != backgroundColor) {
+		// MSAA is done using a rotated (square) grid,
+		// and can therefore only be 4x or 16x.
+		switch (MSAA) {
+		case 4:
+			rgb = raytrace(x - 1. / 8., y - 3. / 8.);	// +#++
+			rgb += raytrace(x + 3. / 8., y - 1. / 8.);	// +++#
+			rgb += raytrace(x - 3. / 8., y + 1. / 8.);	// #+++
+			rgb += raytrace(x + 1. / 8., y + 3. / 8.);	// ++#+
+			rgb /= 4;
+			break;
+		case 16:
+			rgb = raytrace(x - 9. / 32., y - 15. / 32.);	// +++#++++ ++++++++
+			rgb += raytrace(x - 1. / 32., y - 13. / 32.);	// +++++++# ++++++++
+			rgb += raytrace(x + 7. / 32., y - 11. / 32.);	// ++++++++ +++#++++
+			rgb += raytrace(x + 15. / 32., y - 9. / 32.);	// ++++++++ +++++++#
+			rgb += raytrace(x - 11. / 32., y - 7. / 32.);	// ++#+++++ ++++++++
+			rgb += raytrace(x - 3. / 32., y - 5. / 32.);	// ++++++#+ ++++++++
+			rgb += raytrace(x + 5. / 32., y - 3. / 32.);	// ++++++++ ++#+++++
+			rgb += raytrace(x + 13. / 32., y - 1. / 32.);	// ++++++++ ++++++#+
+
+			rgb += raytrace(x - 13. / 32., y + 1. / 32.);	// +#++++++ ++++++++
+			rgb += raytrace(x - 5. / 32., y + 3. / 32.);	// +++++#++ ++++++++
+			rgb += raytrace(x + 3. / 32., y + 5. / 32.);	// ++++++++ +#++++++
+			rgb += raytrace(x + 11. / 32., y + 7. / 32.);	// ++++++++ +++++#++
+			rgb += raytrace(x - 15. / 32., y + 9. / 32.);	// #+++++++ ++++++++
+			rgb += raytrace(x - 7. / 32., y + 11. / 32.);	// ++++#+++ ++++++++
+			rgb += raytrace(x + 1. / 32., y + 13. / 32.);	// ++++++++ #+++++++
+			rgb += raytrace(x + 9. / 32., y + 15. / 32.);	// ++++++++ ++++#+++
+			rgb /= 16.;
+			break;
+		}
+	}
+	return rgb;
+}
+
 //perform the raytracing for one x/y position
 Vec3Df RayTracer::raytrace(double x, double y)
 {
