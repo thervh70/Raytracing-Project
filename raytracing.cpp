@@ -264,19 +264,36 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k, floa
 		// calculating the dotProduct of the vector of indence and the normal of the hitPoint.
 		float cosThetaIncidence = Vec3Df::dotProduct(vIncidence, interpolatedNormal);
 
-		// Sin^2(Theta) calculation, with theta as the angle of incidence, by using formula 2.
+		// Sin^2(Theta) calculation, with theta as the angle of transmittance, by using formula 2.
 		float sin2ThetaTransmitted = pow(refractIndex, 2) * (1 - (pow(cosThetaIncidence, 2)));
 
-		// The result is a transmitted ray, by using formula 1.
-		const Vec3Df tRay = refractIndex * vIncidence + (refractIndex * cosThetaIncidence - sqrt(1 - sin2ThetaTransmitted)) * interpolatedNormal,
+		Vec3Df newOriginR, newDestR;
 
-// Debug and Tracing
-			newOriginR = hitPoint + 0.001f * tRay,
-			newDestR = hitPoint + tRay;
-			
 		// Important: only shoot the tRay if the angle is smaller than the critical angle.
 		if (sin2ThetaTransmitted <= 1) {
+			// The result is a transmitted ray, by using formula 1.
+			const Vec3Df tRay = refractIndex * vIncidence + (refractIndex * cosThetaIncidence - sqrt(1 - sin2ThetaTransmitted)) * interpolatedNormal,
+				newOriginR = hitPoint + 0.001f * tRay,
+				newDestR = hitPoint + tRay;
 
+			// Debug and Tracing		
+			if (debug)
+				testRay.push_back(TestRay(hitPoint, Vec3Df(), Vec3Df()));
+
+			Vec3Df newCol = performRayTracing(newOriginR, newDestR, ++k, n2);
+			resCol = 0.3*resCol + 0.7*newCol;
+
+			if (debug)
+				testRay[k].color = newCol;
+
+		}
+		else {
+			// The result is just a reflected ray.
+			const Vec3Df refRay = vIncidence - 2 * Vec3Df::dotProduct(vIncidence, interpolatedNormal) * interpolatedNormal,
+				newOriginR = hitPoint + 0.001f * refRay,
+				newDestR = hitPoint + refRay;
+
+			// Debug and Tracing		
 			if (debug)
 				testRay.push_back(TestRay(hitPoint, Vec3Df(), Vec3Df()));
 
@@ -285,9 +302,8 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k, floa
 
 			if (debug)
 				testRay[k].color = newCol;
-		}
-//
 
+		}
 	}
 
 
