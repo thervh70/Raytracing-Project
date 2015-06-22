@@ -70,7 +70,7 @@ void init()
 }
 
 //return the color of your pixel.
-Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
+Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k, float prev_Ni)
 {
 
 	if (k > 5) return Vec3Df();
@@ -220,6 +220,12 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 		}
 	}
 
+	// These are the indices of refraction.
+	// n1 is the material from where the ray comes from, which is the Ni value if it has a Ni value, else float 1.
+	float n1 = (prev_Ni != 0.0f) ? prev_Ni : 1.0f;
+	// n2 is the material of the hitPoint, which is the Ni value if it has a Ni value, else float 1.
+	float n2 = (material.has_Ni()) ? material.Ni() : 1.0f;
+
 	if (material.illum() == 3) {
 
 		// reflectdir = dir_of_ray - 2 * ray_projected_on_normal
@@ -230,7 +236,7 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 		if (debug)
 			testRay.push_back(TestRay(hitPoint, Vec3Df(), Vec3Df()));
 
-		Vec3Df newCol = performRayTracing(newOrigin, newDest, ++k);
+		Vec3Df newCol = performRayTracing(newOrigin, newDest, ++k, n2);
 		resCol = 0.5*resCol + 0.5*newCol;
 
 		if (debug)
@@ -242,15 +248,6 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 	Vec3Df vIncidence = dir;
 	vIncidence.normalize();
 
-	// These are the indices of refraction.
-	// n1 first material, n2 second material.
-	float n1, n2;
-
-	// n1 is the material from where the ray comes from, which is the Ni value if it has a Ni value, else float 1.
-	n1 = (hitpair.prev_material.has_Ni()) ? hitpair.prev_material.Ni() : 1.0f;
-	// n2 is the material of the hitPoint, which is the Ni value if it has a Ni value, else float 1.
-	n2 = (material.has_Ni()) ? material.Ni() : 1.0f;
-
 	// If the refraction index of a material is greater than 1, 
 	// then refraction has to be taken into account.
 	if (material.Ni() > 1.0f) {
@@ -260,7 +257,7 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 
 		// Refractionindex is based on the division of the two refractive indices 
 		// of the involved materials.
-		float refractIndex = n1 / n2;
+		float refractIndex = ( n1 != n2 ) ? n2 : (1 / n2);
 
 		// Cos(Theta) with theta as the angle of incidence calculation, by
 		// calculating the dotProduct of the vector of indence and the normal of the hitPoint.
@@ -279,7 +276,7 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 			if (debug)
 				testRay.push_back(TestRay(hitPoint, Vec3Df(), Vec3Df()));
 
-			Vec3Df newCol = performRayTracing(newOriginR, newDestR, ++k);
+			Vec3Df newCol = performRayTracing(newOriginR, newDestR, ++k, n2);
 			resCol = 0.5*resCol + 0.5*newCol;
 
 			if (debug)
@@ -389,7 +386,7 @@ void yourKeyboardFunc(char t, int x, int y, const Vec3Df & rayOrigin, const Vec3
 		testRay[0].destination = rayDestination;
 
 		// make the ray the color of the intersection point (and slightly brighter)
-		testRay[0].color = performRayTracing(testRay[0].origin, testRay[0].destination, 0);
+		testRay[0].color = performRayTracing(testRay[0].origin, testRay[0].destination, 0, 0.0f);
 
 		std::cout << "Test ray trace:" << std::endl;
 
@@ -428,8 +425,6 @@ inline Hitpair checkHit(const Triangle & triangle, const Vec3Df & origin, const 
 	// local variables
 	Vec3Df v0, v1, v2, vec1, vec2, dir = dest - origin;
 	Hitpair result;
-
-//prev_material = MyMesh ORIGIN
 
 	// Vertices of the triangle
 	v0 = MyMesh.vertices[triangle.v[0]].p;

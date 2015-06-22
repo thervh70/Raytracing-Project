@@ -26,7 +26,7 @@ void produceRay(int x_I, int y_I, Vec3Df & origin, Vec3Df & dest);
 
 
 //your main function to rewrite
-Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int i);
+Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int i, float prev_Ni);
 
 //a function to debug --- you can draw in OpenGL here
 void yourDebugDraw();
@@ -38,7 +38,6 @@ struct Hitpair {
 	bool bHit;
 	Vec3Df res;
 	Vec3Df hitPoint;
-	Material prev_material;
 };
 
 struct AccelTreeNode {
