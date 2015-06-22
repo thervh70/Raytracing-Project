@@ -35,10 +35,6 @@ bool builtAccelTree = false;
 int treeDepth = 0;
 int treeNodes = 1;
 
-// Set the tree accuracy (choose values like 10, 100, 1000).
-// only lower this if building the tree is taking too much time.
-float TREE_ACCURACY = 500.0f;
-
 //use this function for any preprocessing of the mesh.
 void init()
 {
@@ -180,7 +176,10 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 
 	// default lighting in all parts that even are in shadow everywhere.
 	// Maarten - This should be Ka, ambient light, but our .mtl files have Ka = (0,0,0).
-	resCol = material.Kd()*backgroundlighting;
+	if (!material.hasTexture())
+		return material.Kd()*backgroundlighting;
+	else
+		return material.getTexture(MyMesh, triangle, hitPoint);
 
 	float angle, distanceToLight;
 	Vec3Df lightDir, viewDir, halfwayVector;
@@ -569,7 +568,7 @@ void splitSpaces(AccelTreeNode& tree, const int axis) {
 float calcBestSplit(AccelTreeNode &tree, int axis)
 {
 	float mid;
-	float result;
+	float result = 0;
 	float cost = std::numeric_limits<float>::max(), tempCost;
 
 	for (int i = 1; i < TREE_ACCURACY; ++i)

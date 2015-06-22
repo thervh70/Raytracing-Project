@@ -100,4 +100,8 @@ inline void projectOriginOnRoot(Vec3Df &origin, Vec3Df &dest);
 inline Vec3Df calculateProjectionOnRoot(Vec3Df &origin, Vec3Df &dest);
 float calcBestSplit(AccelTreeNode &tree, int axis);
 
+// Set the tree accuracy (choose values like 10, 100, 1000).
+// only lower this if building the tree is taking too much time.
+const float TREE_ACCURACY = 2.0f;
+
 #endif

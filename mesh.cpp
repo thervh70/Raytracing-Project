@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include <fstream>
+#include "Matrix33.h"
 
 
 /************************************************************
@@ -344,6 +345,11 @@ bool Mesh::loadMesh(const char * filename, bool randomizeTriangulation)
         memset(&s, 0, LINE_LEN);
     }
 	fclose(in);
+
+	// load all textures
+	for (std::vector<Material>::iterator it = materials.begin(); it != materials.end(); ++it)
+		(*it).loadTexture();
+
     return true;
 }
 
@@ -438,7 +444,7 @@ bool Mesh::loadMtl(const char * filename, std::map<string, unsigned int> & mater
 			if (!t.empty() && t[t.length()-1] == '\n') {
 				t.erase(t.length()-1);
 			}
-
+			
           // map_Kd, diffuse map
           // map_Ks, specular map
           // map_Ka, ambient map
@@ -474,4 +480,53 @@ bool Mesh::loadMtl(const char * filename, std::map<string, unsigned int> & mater
     printf("%u  materials loaded.\n", msize);
     fclose( _in );
     return true;
+}
+
+// get the texture at the given texture coordinates
+// texture coordinate x should be the percentage of the width of the picture which you want to go to the right (value between 0 and 1)
+// texture coordinate y should be the percentageof the height of the picture which you want to go down (value between 0 and 1)
+Vec3Df Material::getTexture2(Vec3Df texCoords)
+{
+	// check if invalid pos:
+	if (texCoords[0] > textureWidth || texCoords[0] < 0)
+	{
+		std::cout << "invalid texture x-position: " << texCoords[0] << std::endl;
+		return Vec3Df(0, 0, 0);
+	} else if (texCoords[1] > textureHeight || texCoords[1] < 0)
+	{
+		std::cout << "invalid texture y-position: " << texCoords[1] << std::endl;
+		return Vec3Df(0, 0, 0);
+	}
+
+	int pos = (float) (textureWidth * texCoords[0] + textureWidth * textureHeight * texCoords[1]);
+	typedef unsigned char byte;
+	byte* pixel = (byte*)texturePixels;
+	pixel += pos * 4;
+	float red = *pixel++;
+	float green = *pixel++;
+	float blue = *pixel++;
+	return Vec3Df(red / 255.0f, green / 255.0f, blue / 255.0f);
+}
+
+// get the texture at the hitpoint
+Vec3Df Material::getTexture(const Mesh &MyMesh, const Triangle &t, const Vec3Df &hitpoint)
+{
+	// get the texture coordinates
+	Vec3Df tex0 = MyMesh.texcoords[t.t[0]],
+		tex1 = MyMesh.texcoords[t.t[1]],
+		tex2 = MyMesh.texcoords[t.t[2]];
+
+	// get the vertice coordinates
+	Vec3Df vec0 = MyMesh.vertices[t.v[0]].p,
+		vec1 = MyMesh.vertices[t.v[1]].p,
+		vec2 = MyMesh.vertices[t.v[2]].p;
+	
+	// THIS DOESN'T WORK:
+	// ----------------------------------------------------------------------------------
+	Matrix33f matrix(vec0 - vec2, vec1 - vec2, hitpoint);
+	Vec3Df res = matrix.solve(hitpoint - vec2);
+	Vec3Df texCoords = tex2 + res[0] * (tex0 - tex2) + res[1] * (tex1 - tex2);
+	// ----------------------------------------------------------------------------------
+
+	return getTexture2(texCoords);
 }
