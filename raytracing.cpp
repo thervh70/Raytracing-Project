@@ -75,10 +75,9 @@ void init()
 //return the color of your pixel.
 Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 {
+	if (k > 5) return endOfReflection;
 
-	if (k > 5) return Vec3Df();
-
-	Vec3Df resCol = Vec3Df(), hitPoint, dir = dest - origin;
+	Vec3Df resCol, hitPoint, dir = dest - origin;
 	Hitpair hitpair;
 	Triangle triangle;
 	float t, minT = std::numeric_limits<float>::max();
