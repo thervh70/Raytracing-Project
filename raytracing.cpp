@@ -9,6 +9,7 @@
 #include "Vec3D.h"
 #include "Matrix33.h"
 #include "settings.h"
+#include <algorithm>
 
 // All the rays in testRay will be drawn in yourDebugDraw().
 std::vector<TestRay> testRay;
@@ -103,29 +104,32 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k, floa
 		if (angle > 0)
 			resCol += hit.material.Kd()*angle * diffusePower; // / distanceToLight;
 
+															  // Self Shadows (Dark side of object
 		angle = Vec3Df::dotProduct(lightDir, interpolatedNormal);
 		// Self Shadows (Dark side of object)
-		if (angle <= 0.f) {
-			shadowMax = 1.0f;
-		} 
-		else if (angle > 0.f & angle < 0.3f) {
-			shadowMax = ((1.0f/0.3f) * (0.3f - angle));
-		} 
+		if (angle <= 0.2f) {
+			shadowMax = 1.f;				
+		}
+		else if (angle > 0.2f & angle < 0.5f) {
+			angle -= 0.2f;
+			shadowMax = (3.33f * (0.3f - angle));
+		}
+
+		float softShadow = 0.f;
 		if (angle > 0.f) {
 			// Specular lighting
 			halfwayVector = (lightDir + viewDir);
 			halfwayVector.normalize();
 			angle = Vec3Df::dotProduct(interpolatedNormal, halfwayVector);
-			if (angle > 0)
+			if (angle > 0.f)
 				resCol += hit.material.Ks()*std::pow(angle, specularHighlight);
-			
+
 			//Shadow casted by an object
 			if (shadowSamples <= 1) {
 				if (checkHit((hit.hitPoint + 0.001f * lightDir), v).bHit)
-					shadowMax = 1.0f;
+					shadowMax = 1.f;
 			}
 			if (shadowSamples > 1) {
-				float softShadow;
 				// The + 0.000...0001f prevents the compiler saying "divide by zero"
 				float delta = 2.f / (float)(shadowSamples - 1 + 0.000000000000000000001f);
 				for (float x = -1.f; x <= 1.f; x += delta)
@@ -134,14 +138,15 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k, floa
 					float rx = delta / 2.f * (double)rand() / (double)RAND_MAX - delta / 4.f;
 					float ry = delta / 2.f * (double)rand() / (double)RAND_MAX - delta / 4.f;
 					float rz = delta / 2.f * (double)rand() / (double)RAND_MAX - delta / 4.f;
-					shadowHit = checkHit((hit.hitPoint + 0.5f * lightDir), v + Vec3Df((x + rx) * shadowRadius, (y + ry) * shadowRadius, (z + rz) * shadowRadius));
+					shadowHit = checkHit((hit.hitPoint + 0.001f * lightDir), v + Vec3Df(x*shadowRadius + rx, y*shadowRadius + ry, z*shadowRadius + rz));
 					if (shadowHit.bHit) {
 						softShadow += 1.0f / shadowSamples / shadowSamples / shadowSamples;
 					}
 				}
-				shadowMax = softShadow > shadowMax ? softShadow : shadowMax;
+				
 			}
 		}
+		shadowMax = std::max(shadowMax, softShadow);
 		resCol -= shadowMax * shadowRGB;
 	}
 
