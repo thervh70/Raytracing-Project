@@ -10,6 +10,7 @@ const float diffusePower = 1.5f;
 const float ShadowFactor = 0.5f;
 
 const int MSAA = 1; //valid: 1, 4, 16; default: 1
+const float depthPower = 12.0f; // default: 4.0f
 
 #define backgroundColor Vec3Df(0.2f, 0.5f, 1.0f)
 #define endOfReflection Vec3Df(0.0f, 0.0f, 0.0f)

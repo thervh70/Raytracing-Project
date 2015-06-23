@@ -72,6 +72,11 @@ void init()
 	}
 }
 
+Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k) {
+	float depth;
+	return performRayTracing(origin, dest, k, depth);
+}
+
 //return the color of your pixel.
 Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k, float &minT)
 {
@@ -341,7 +346,8 @@ void yourKeyboardFunc(char t, int x, int y, const Vec3Df & rayOrigin, const Vec3
 		testRay[0].destination = rayDestination;
 
 		// make the ray the color of the intersection point (and slightly brighter)
-		testRay[0].color = performRayTracing(testRay[0].origin, testRay[0].destination, 0);
+		float depth;
+		testRay[0].color = performRayTracing(testRay[0].origin, testRay[0].destination, 0, depth);
 
 		std::cout << "Test ray trace:" << std::endl;
 
@@ -353,7 +359,8 @@ void yourKeyboardFunc(char t, int x, int y, const Vec3Df & rayOrigin, const Vec3
 		for (TestRay r : testRay) {
 			std::cout << "Origin      " << r.origin << std::endl;
 			std::cout << "Destination " << r.destination << std::endl;
-			std::cout << "Color       " << r.color << std::endl << std::endl;
+			std::cout << "Color       " << r.color << std::endl;
+			std::cout << "Depth       " << depth << std::endl << std::endl;
 		}
 		
 		debug = false;

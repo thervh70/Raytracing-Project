@@ -224,12 +224,22 @@ void reshape(int w, int h)
 // react to keyboard input
 void keyboard(unsigned char key, int x, int y)
 {
+	Image img = Image();
+
 	double times = 0;
     printf("key %d '%c' pressed at %d,%d\n", key, key, x, y);
     fflush(stdout);
     switch (key)
     {
 	//add/update a light based on the camera position.
+	case 't':
+		img.printGauseanMap(0.001f);
+		img.printGauseanMap(0.01f);
+		img.printGauseanMap(0.1f);
+		img.printGauseanMap(0.3f);
+		img.printGauseanMap(1.0f);
+
+		break;
 	case 'L':
 		MyLightPositions.push_back(getCameraPosition());
 		break;
@@ -313,6 +323,9 @@ double RayTracer::doDaRayTracingShizz() {
 	printf("Stored result in result.ppm");
 	result.writeImageBMP("result.bmp");
 	printf(" and result.bmp\n");
+	result.writeDepthBMP("depth.bmp");
+	printf(" and depth.bmp\n");
+
 	return elapsed_secs;
 }
 
@@ -328,14 +341,14 @@ void RayTracer::threadmethod(int threadID)
 {
 	bool done = false;
 	unsigned y = tcurrent[threadID];
+	float depth, depthHolder;
 	while (!done)
 	{
 		// Perform raytracing on the line
 		for (unsigned int x = 0; x < WindowSize_X; ++x)
 		{
-			float depth, depthHolder;
 			int hitNumber = 0;
-			Vec3Df rgb = raytrace(x, y);
+			Vec3Df rgb = raytrace(x, y, depth);
 			if (rgb != backgroundColor) {
 				// MSAA is done using a rotated (square) grid,
 				// and can therefore only be 4x or 16x.
