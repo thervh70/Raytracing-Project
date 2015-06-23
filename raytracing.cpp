@@ -181,8 +181,9 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k, floa
 		// (1); tRay = n1/n2 * vIncidence + ( n1/n2 * cos(thetaIncidence) - sqrt(1 - sin^2(thetaTransmitted) ) ) * normal.
 		// with (2); sin^2(thetaTransmitted) = (n1/n2)^2 * (1 - cos^2(thetaIncidence))
 
-		// Refractionindex is based on the division of the two refractive indices 
-		// of the involved materials.
+		// Refractionindex calculation is based on the current refractionindex and the previous one.
+		// If they are not equal, then use the current one (a ray will now be shot into the object).
+		// If they are equal, then calculate n2^-1 (a ray will now be shot from the object, in order to get out of it).
 		float refractIndex = (n1 != n2) ? n2 : (1 / n2);
 
 		// Cos(Theta) with theta as the angle of incidence calculation, by
