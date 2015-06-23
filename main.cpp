@@ -324,9 +324,11 @@ double RayTracer::doDaRayTracingShizz() {
 	result.writeImagePPM("result.ppm");
 	printf("Stored result in result.ppm");
 	result.writeImageBMP("result.bmp");
-	printf(" and result.bmp\n");
+	printf(", result.bmp");
 	result.writeDepthBMP("depth.bmp");
-	printf(" and depth.bmp\n");
+	printf(", depth.bmp");
+	result.writeBlurredBMP("blurred.bmp");
+	printf(" and blurred.bmp\n");
 
 	return elapsed_secs;
 }

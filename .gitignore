@@ -13,3 +13,4 @@ config.h
 result.*
 *.opensdf
 *.sdf
+*.bmp
