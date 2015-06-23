@@ -177,9 +177,9 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k)
 	// default lighting in all parts that even are in shadow everywhere.
 	// Maarten - This should be Ka, ambient light, but our .mtl files have Ka = (0,0,0).
 	if (!material.hasTexture())
-		return material.Kd()*backgroundlighting;
+		resCol = material.Kd()*backgroundlighting;
 	else
-		return material.getTexture(MyMesh, triangle, hitPoint);
+		resCol = material.getTexture(MyMesh, triangle, hitPoint);
 
 	float angle, distanceToLight;
 	Vec3Df lightDir, viewDir, halfwayVector;
