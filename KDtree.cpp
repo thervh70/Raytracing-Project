@@ -307,16 +307,20 @@ inline AccelTreeNode findNextNode(const AccelTreeNode &curN, const Vec3Df &posit
 						// check y-axis
 						if (tempy < (*node.leftChild).yEnd)
 							node = *node.leftChild;
-						else
+						else if (tempy > (*node.leftChild).yEnd || dir[1] > 0)
 							node = *node.rightChild;
+						else
+							node = *node.leftChild;
 					}
 					else
 					{
 						// check z-axis
 						if (tempz < (*node.leftChild).zEnd)
 							node = *node.leftChild;
-						else
+						else if (tempz > (*node.leftChild).zEnd || dir[2] > 0)
 							node = *node.rightChild;
+						else
+							node = *node.leftChild;
 					}
 					if (node.leftChild == nullptr)
 						return node;
@@ -354,16 +358,20 @@ inline AccelTreeNode findNextNode(const AccelTreeNode &curN, const Vec3Df &posit
 						// check y-axis
 						if (tempy < (*node.leftChild).yEnd)
 							node = *node.leftChild;
-						else
+						else if (tempy > (*node.leftChild).yEnd || dir[1] > 0)
 							node = *node.rightChild;
+						else
+							node = *node.leftChild;
 					}
 					else
 					{
 						// check z-axis
 						if (tempz < (*node.leftChild).zEnd)
 							node = *node.leftChild;
-						else
+						else if (tempz > (*node.leftChild).zEnd || dir[2] > 0)
 							node = *node.rightChild;
+						else
+							node = *node.leftChild;
 					}
 					if (node.leftChild == nullptr)
 						return node;
@@ -398,8 +406,10 @@ inline AccelTreeNode findNextNode(const AccelTreeNode &curN, const Vec3Df &posit
 						// check x-axis
 						if (tempx < (*node.leftChild).xEnd)
 							node = *node.leftChild;
-						else
+						else if (tempx > (*node.leftChild).xEnd || dir[0] > 0)
 							node = *node.rightChild;
+						else
+							node = *node.leftChild;
 					}
 					else if (axis % 3 == 1)
 					{
@@ -414,8 +424,10 @@ inline AccelTreeNode findNextNode(const AccelTreeNode &curN, const Vec3Df &posit
 						// check z-axis
 						if (tempz < (*node.leftChild).zEnd)
 							node = *node.leftChild;
-						else
+						else if (tempz > (*node.leftChild).zEnd || dir[2] > 0)
 							node = *node.rightChild;
+						else
+							node = *node.leftChild;
 					}
 					if (node.leftChild == nullptr)
 						return node;
@@ -445,8 +457,10 @@ inline AccelTreeNode findNextNode(const AccelTreeNode &curN, const Vec3Df &posit
 						// check x-axis
 						if (tempx < (*node.leftChild).xEnd)
 							node = *node.leftChild;
-						else
+						else if (tempx > (*node.leftChild).xEnd || dir[0] > 0)
 							node = *node.rightChild;
+						else
+							node = *node.leftChild;
 					}
 					else if (axis % 3 == 1)
 					{
@@ -461,8 +475,10 @@ inline AccelTreeNode findNextNode(const AccelTreeNode &curN, const Vec3Df &posit
 						// check z-axis
 						if (tempz < (*node.leftChild).zEnd)
 							node = *node.leftChild;
-						else
+						else if (tempz > (*node.leftChild).zEnd || dir[2] > 0)
 							node = *node.rightChild;
+						else
+							node = *node.leftChild;
 					}
 					if (node.leftChild == nullptr)
 						return node;
@@ -494,16 +510,20 @@ inline AccelTreeNode findNextNode(const AccelTreeNode &curN, const Vec3Df &posit
 					// check x-axis
 					if (tempx < (*node.leftChild).xEnd)
 						node = *node.leftChild;
-					else
+					else if(tempx > (*node.leftChild).xEnd || dir[0] > 0)
 						node = *node.rightChild;
+					else
+						node = *node.leftChild;
 				}
 				else if (axis % 3 == 1)
 				{
 					// check y-axis
 					if (tempy < (*node.leftChild).yEnd)
 						node = *node.leftChild;
-					else
+					else if (tempy > (*node.leftChild).yEnd || dir[1] > 0)
 						node = *node.rightChild;
+					else
+						node = *node.leftChild;
 				}
 				else
 				{
@@ -537,16 +557,20 @@ inline AccelTreeNode findNextNode(const AccelTreeNode &curN, const Vec3Df &posit
 					// check x-axis
 					if (tempx < (*node.leftChild).xEnd)
 						node = *node.leftChild;
-					else
+					else if (tempx > (*node.leftChild).xEnd || dir[0] > 0)
 						node = *node.rightChild;
+					else
+						node = *node.leftChild;
 				}
 				else if (axis % 3 == 1)
 				{
 					// check y-axis
 					if (tempy < (*node.leftChild).yEnd)
 						node = *node.leftChild;
-					else
+					else if (tempy > (*node.leftChild).yEnd || dir[1] > 0)
 						node = *node.rightChild;
+					else
+						node = *node.leftChild;
 				}
 				else
 				{
