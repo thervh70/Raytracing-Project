@@ -207,15 +207,15 @@ public:
 				}
 			}
 
-			_blurr[3 * (y*_width + i)] = r;
-			_blurr[3 * (y*_width + i)+1] = g;
-			_blurr[3 * (y*_width + i)+2] = b;
+			_blurr[3 * (y*_width + i) ] = r;
+			_blurr[3 * (y*_width + i) + 1] = g;
+			_blurr[3 * (y*_width + i) + 2] = b;
 		}
 	}
 
 	void blurrAllLines() {
 		for (int i = 6; i < (_height - 6); i++) {
-			Image::blurrLine(i);
+			Image::blurrLine(i); 
 		}
 	}
 
@@ -400,6 +400,7 @@ bool Image::writeBlurredBMP(const char * filename)
 	}
 
 	Image::normailzeDepthRange();
+	Image::initBlurrMap();
 	Image::blurrAllLines();
 
 	// Print BMP header
