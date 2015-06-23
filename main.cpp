@@ -284,6 +284,7 @@ double RayTracer::doDaRayTracingShizz() {
 	}
 	// make sure the last thread won't get out of bounds
 	tend[n - 1] = WindowSize_Y;
+	linedone[WindowSize_Y] = true;
 
 	int currpx = 0;
 	int prevpx = 0;

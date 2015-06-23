@@ -10,7 +10,7 @@ const float diffusePower = 1.2f;
 const float ShadowFactor = 0.6f;
 
 const float shadowRadius = 0.1f; // This is the "radius" of the light source
-const int shadowSamples = 2; // This results in shadowSamples ^ 3 shadowrays being shot, set to 1 for hard shadows
+const int shadowSamples = 4; // This results in shadowSamples ^ 3 shadowrays being shot, set to 1 for hard shadows
 
 const int MSAA = 16; //valid: 1, 4, 16; default: 1
 

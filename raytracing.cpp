@@ -86,7 +86,9 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k, floa
 	float specularHighlight = hit.material.Ns();
 
 	// Full shadow reduces light by (0.9,0.9,0.9) when ShadowFactor = 0.9
-	Vec3Df shadowRGB = Vec3Df(1.f, 1.f, 1.f) * ShadowFactor / MyLightPositions.size();
+	float shadowPart = ShadowFactor / MyLightPositions.size();
+	Vec3Df shadowRGB = Vec3Df(1.f, 1.f, 1.f) * shadowPart;
+	float shadowMax = 0.f;
 	HitTriangle shadowHit;
 
 	viewDir = origin - hit.hitPoint;
@@ -101,15 +103,15 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k, floa
 		if (angle > 0)
 			resCol += hit.material.Kd()*angle * diffusePower; // / distanceToLight;
 
-		float dot = Vec3Df::dotProduct(lightDir, interpolatedNormal);
-		// Self Shadows (Dark side of object
-		if (dot <= 0.f) {
-			resCol -= shadowRGB;
+		angle = Vec3Df::dotProduct(lightDir, interpolatedNormal);
+		// Self Shadows (Dark side of object)
+		if (angle <= 0.f) {
+			shadowMax = 1.0f;
 		} 
-		else if (dot > 0.f & dot < 0.3f) {
-			resCol -= ((10.f/3.f) * abs(dot - 0.3f)) * shadowRGB;
+		else if (angle > 0.f & angle < 0.3f) {
+			shadowMax = ((1.0f/0.3f) * (0.3f - angle));
 		} 
-		else {
+		if (angle > 0.f) {
 			// Specular lighting
 			halfwayVector = (lightDir + viewDir);
 			halfwayVector.normalize();
@@ -120,24 +122,27 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k, floa
 			//Shadow casted by an object
 			if (shadowSamples <= 1) {
 				if (checkHit((hit.hitPoint + 0.001f * lightDir), v).bHit)
-					resCol -= shadowRGB;
+					shadowMax = 1.0f;
 			}
 			if (shadowSamples > 1) {
+				float softShadow;
 				// The + 0.000...0001f prevents the compiler saying "divide by zero"
 				float delta = 2.f / (float)(shadowSamples - 1 + 0.000000000000000000001f);
 				for (float x = -1.f; x <= 1.f; x += delta)
 				for (float y = -1.f; y <= 1.f; y += delta)
 				for (float z = -1.f; z <= 1.f; z += delta) {
-					float rx = delta * (double)rand() / (double)RAND_MAX - delta / 2.f;
-					float ry = delta * (double)rand() / (double)RAND_MAX - delta / 2.f;
-					float rz = delta * (double)rand() / (double)RAND_MAX - delta / 2.f;
-					shadowHit = checkHit((hit.hitPoint + 0.001f * lightDir), v + Vec3Df(x*shadowRadius + rx, y*shadowRadius + ry, z*shadowRadius + rz));
+					float rx = 0.f;//delta / 2.f * (double)rand() / (double)RAND_MAX - delta / 4.f;
+					float ry = 0.f;//delta / 2.f * (double)rand() / (double)RAND_MAX - delta / 4.f;
+					float rz = 0.f;//delta / 2.f * (double)rand() / (double)RAND_MAX - delta / 4.f;
+					shadowHit = checkHit((hit.hitPoint + 0.5f * lightDir), v + Vec3Df((x + rx) * shadowRadius, (y + ry) * shadowRadius, (z + rz) * shadowRadius));
 					if (shadowHit.bHit) {
-						resCol -= shadowRGB / shadowSamples / shadowSamples / shadowSamples;
+						softShadow += 1.0f / shadowSamples / shadowSamples / shadowSamples;
 					}
 				}
+				shadowMax = softShadow > shadowMax ? softShadow : shadowMax;
 			}
 		}
+		resCol -= shadowMax * shadowRGB;
 	}
 
 	// These are the indices of refraction.
@@ -431,7 +436,7 @@ void yourKeyboardFunc(char t, int x, int y, const Vec3Df & rayOrigin, const Vec3
 		// make the ray the color of the intersection point (and slightly brighter)
 		testRay[0].color = performRayTracing(testRay[0].origin, testRay[0].destination, 0, 0.0f);
 
-		std::cout << "Test ray trace:" << std::endl;
+		std::cout << "DEBUG RAY TRACE" << std::endl;
 
 		for (Vec3Df v : MyLightPositions) {
 			std::cout << "Light position: " << v << std::endl;
