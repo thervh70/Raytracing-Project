@@ -436,14 +436,19 @@ Vec3Df RayTracer::raytraceMSAA(int x, int y, float &depth) {
 
 	int hitNumber = 0;
 	float depthHolder;
-	Vec3Df rgb = raytrace(x, y, depth);
 	depth = 0;
+	Vec3Df rgb = raytrace(x, y, depthHolder);
+	depthIncrease(depth, depthHolder, hitNumber);
+	if (hitNumber == 0)
+		depth = std::numeric_limits<float>::max();
 
-	if (rgb != backgroundColor) {
+	if (hitNumber > 0) {
 		// MSAA is done using a rotated (square) grid,
 		// and can therefore only be 4x or 16x.
 		switch (MSAA) {
 		case 4:
+			depth = 0;
+			hitNumber = 0;
 			rgb = raytrace(x - 1. / 8., y - 3. / 8., depthHolder);	// +#++
 			depthIncrease(depth, depthHolder, hitNumber);
 			rgb += raytrace(x + 3. / 8., y - 1. / 8., depthHolder);	// +++#
@@ -459,6 +464,8 @@ Vec3Df RayTracer::raytraceMSAA(int x, int y, float &depth) {
 				depth = std::numeric_limits<float>::max();
 			break;
 		case 16:
+			depth = 0;
+			hitNumber = 0;
 			rgb = raytrace(x - 9. / 32., y - 15. / 32., depthHolder);	// +++#++++ ++++++++
 			depthIncrease(depth, depthHolder, hitNumber);
 			rgb += raytrace(x - 1. / 32., y - 13. / 32., depthHolder);	// +++++++# ++++++++
