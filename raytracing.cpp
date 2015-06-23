@@ -80,7 +80,10 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k, floa
 
 	// default lighting in all parts that even are in shadow everywhere.
 	// Maarten - This should be Ka, ambient light, but our .mtl files have Ka = (0,0,0).
-	resCol = hit.material.Kd()*backgroundlighting;
+	if (!hit.material.hasTexture())
+		resCol = hit.material.Kd()*backgroundlighting;
+	else
+		resCol = hit.material.getTexture(MyMesh, hit.triangle, hit.hitPoint);
 
 	float angle, distanceToLight;
 	Vec3Df lightDir, viewDir, halfwayVector;
@@ -307,7 +310,6 @@ HitTriangle checkHit(const Vec3Df & origin, const Vec3Df & dest) {
 			//outside of root
 			break;
 	}
-
 	return res;
 }
 
