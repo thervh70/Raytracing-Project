@@ -130,8 +130,22 @@ public:
 	std::vector<std::vector<float>> gauseanMap(float intesisty) {
 		float total = 0.;
 		std::vector<std::vector<float>> map;
-
 		map.resize(12);
+
+		if (intesisty >= 1) {
+			for (int i = 0; i < 12; i++) {
+				std::vector<float> row;
+				row.resize(12);
+
+				for (int j = 0; j < 12; j++) {
+					row[j] = 0.0f;
+				}
+				map[i] = row;
+			}
+			map[6][6] = 1;
+			return map;
+		}
+
 		for (int i = 0; i < 12; i++) {
 			std::vector<float> row;
 			row.resize(12);

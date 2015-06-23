@@ -237,6 +237,8 @@ void keyboard(unsigned char key, int x, int y)
 		img.printGauseanMap(0.01f);
 		img.printGauseanMap(0.1f);
 		img.printGauseanMap(0.3f);
+		img.printGauseanMap(0.7f);
+		img.printGauseanMap(0.9f);
 		img.printGauseanMap(1.0f);
 
 		break;
