@@ -187,7 +187,7 @@ public:
 	}
 
 	void initBlurrMap() {
-		_blurr.resize(3 * (_width - 24)*(_height - 24));
+		_blurr.resize(_image.size());
 	}
 
 	void blurrLine(int y) {
@@ -322,7 +322,6 @@ bool Image::writeImageBMP(const char * filename)
 	return true;
 }
 
-
 bool Image::writeDepthBMP(const char * filename)
 {
 	FILE* file;
@@ -388,7 +387,6 @@ bool Image::writeDepthBMP(const char * filename)
 	return true;
 }
 
-
 bool Image::writeBlurredBMP(const char * filename)
 {
 	FILE* file;
@@ -433,12 +431,12 @@ bool Image::writeBlurredBMP(const char * filename)
 		unsigned int i = 6;
 		for (; i < (_width-6) * 3; i += 3) {
 			// RGB are flipped to BGR
-			imageC[y*rowsize + i] = (unsigned char)(_blurr[y*_width * 3 + i + 2] * 255.0f);
-			imageC[y*rowsize + i + 1] = (unsigned char)(_blurr[y*_width * 3 + i + 1] * 255.0f);
-			imageC[y*rowsize + i + 2] = (unsigned char)(_blurr[y*_width * 3 + i] * 255.0f);
+			imageC[(y - 6)*rowsize + i - 6] = (unsigned char)(_blurr[y*_width * 3 + i + 2] * 255.0f);
+			imageC[(y - 6)*rowsize + i - 5] = (unsigned char)(_blurr[y*_width * 3 + i + 1] * 255.0f);
+			imageC[(y - 6)*rowsize + i - 4] = (unsigned char)(_blurr[y*_width * 3 + i] * 255.0f);
 		}
 		for (; i < rowsize; ++i) {
-			imageC[y*rowsize + i] = (unsigned char)1;
+			imageC[(y - 6)*rowsize + i] = (unsigned char)1;
 		}
 	}
 
@@ -452,8 +450,6 @@ bool Image::writeBlurredBMP(const char * filename)
 	fclose(file);
 	return true;
 }
-
-
 
 bool Image::writeImageBMP(const char* filename, int x, int y, int w, int h) {
 	std::fstream s(filename, std::fstream::in | std::fstream::out | std::fstream::binary);
