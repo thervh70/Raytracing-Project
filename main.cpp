@@ -54,8 +54,9 @@ public:
 		produceRay(WindowSize_X - 1, 0, &origin10, &dest10);
 		produceRay(WindowSize_X - 1, WindowSize_Y - 1, &origin11, &dest11);
 	};
-	Vec3Df raytrace(double x, double y, float &depth);
 	static void produceRay(int x_I, int y_I, Vec3Df * origin, Vec3Df * dest);
+	Vec3Df raytrace(double x, double y, float &depth);
+	Vec3Df raytraceMSAA(int x, int y, float &depth);
 	void threadmethod(int threadID);
 	double doDaRayTracingShizz();
 private:
@@ -227,6 +228,8 @@ void keyboard(unsigned char key, int x, int y)
 	Image img = Image();
 
 	double times = 0;
+	int lights = 0;
+	float invalue = 0;
     printf("key %d '%c' pressed at %d,%d\n", key, key, x, y);
     fflush(stdout);
     switch (key)
@@ -262,6 +265,47 @@ void keyboard(unsigned char key, int x, int y)
 		}
 		printf("\nAverage RayTracing time: %f", times);
 		break;
+
+
+	case 's':
+		FILE* file;
+		file = fopen("camera.sav", "wb");
+		for (int i = 0; i < 16; ++i)
+			fprintf(file, "%f ", tb_matrix[i]);
+		fprintf(file, "\r\n%d\r\n", MyLightPositions.size());
+		for (int i = 0; i < MyLightPositions.size(); ++i)
+			fprintf(file, "%f %f %f\r\n", MyLightPositions[i][0], MyLightPositions[i][1], MyLightPositions[i][2]);
+		fclose(file);
+		printf("Camera and light positions saved\n\n");
+		break;
+	case 'S':
+		FILE* in;
+		in = fopen("camera.sav", "r");
+
+		for (int i = 0; i < 16; ++i) {
+			fscanf(in, "%f ", &invalue);
+			tb_matrix[i] = invalue;
+		}
+
+		fscanf(in, "\r\n%d\r\n", &lights);
+		MyLightPositions.clear();
+		MyLightPositions.reserve(lights);
+
+		for (int i = 0; i < lights; ++i) {
+			float inlight[3];
+			fscanf(in, "%f ", &invalue);
+			inlight[0] = invalue;
+			fscanf(in, "%f ", &invalue);
+			inlight[1] = invalue;
+			fscanf(in, "%f", &invalue);
+			inlight[2] = invalue;
+			fscanf(in, "\r\n");
+			MyLightPositions.push_back(Vec3Df(inlight));
+		}
+		fclose(in);
+		glutPostRedisplay();
+		break;
+
 	case 27:     // touche ESC
         exit(0);
     }
@@ -295,20 +339,23 @@ double RayTracer::doDaRayTracingShizz() {
 	}
 	// make sure the last thread won't get out of bounds
 	tend[n - 1] = WindowSize_Y;
+	linedone[WindowSize_Y] = true;
 
-	int currpx;
+	int currpx = 0;
+	int prevpx = 0;
+	int pxpersec = 0;
 	int totalsize = WindowSize_X * WindowSize_Y;
 	do {
 		//print progress once per second
 		Sleep(1000);
+		prevpx = currpx;
 		currpx = 0;
 		for (int j = 0; j < n; ++j)
 			currpx += pixelsdone[j];
 
-		clock_t now = clock();
-		double elapsed   = double(now - begin);
-		double totaltime = double(totalsize) / double(currpx) * elapsed;
-		double remaining = (totaltime - elapsed) / CLOCKS_PER_SEC;
+		int newspeed = (currpx - prevpx);
+		pxpersec = 0.75 * pxpersec + 0.25 * newspeed;
+		double remaining = (double)(totalsize - currpx) / (double)(pxpersec);
 		int r = (int)round(remaining);
 
 		printf("\n%3d%%\tPixel %8d/%8d  %5d s remaining", 100 * currpx / totalsize, currpx, totalsize, r);
@@ -345,76 +392,14 @@ void RayTracer::threadmethod(int threadID)
 {
 	bool done = false;
 	unsigned y = tcurrent[threadID];
-	float depth, depthHolder;
+	linedone[y] = true;
+	float depth;
 	while (!done)
 	{
 		// Perform raytracing on the line
 		for (unsigned int x = 0; x < WindowSize_X; ++x)
 		{
-			int hitNumber = 0;
-			Vec3Df rgb = raytrace(x, y, depth);
-			if (rgb != backgroundColor) {
-				// MSAA is done using a rotated (square) grid,
-				// and can therefore only be 4x or 16x.
-				switch (MSAA) {
-				case 4:
-					rgb  = raytrace(x - 1. / 8., y - 3. / 8., depthHolder);	// +#++
-					depthIncrease(depth, depthHolder, hitNumber);
-					rgb += raytrace(x + 3. / 8., y - 1. / 8., depthHolder);	// +++#
-					depthIncrease(depth, depthHolder, hitNumber);
-					rgb += raytrace(x - 3. / 8., y + 1. / 8., depthHolder);	// #+++
-					depthIncrease(depth, depthHolder, hitNumber);
-					rgb += raytrace(x + 1. / 8., y + 3. / 8., depthHolder);	// ++#+
-					depthIncrease(depth, depthHolder, hitNumber);
-					rgb /= 4;
-					if (hitNumber > 0)
-						depth /= hitNumber;
-					else
-						depth = std::numeric_limits<float>::max();
-					break;
-				case 16:
-					rgb  = raytrace(x -  9. / 32., y - 15. / 32., depthHolder);	// +++#++++ ++++++++
-					depthIncrease(depth, depthHolder, hitNumber);
-					rgb += raytrace(x -  1. / 32., y - 13. / 32., depthHolder);	// +++++++# ++++++++
-					depthIncrease(depth, depthHolder, hitNumber);
-					rgb += raytrace(x +  7. / 32., y - 11. / 32., depthHolder);	// ++++++++ +++#++++
-					depthIncrease(depth, depthHolder, hitNumber);
-					rgb += raytrace(x + 15. / 32., y -  9. / 32., depthHolder);	// ++++++++ +++++++#
-					depthIncrease(depth, depthHolder, hitNumber);
-					rgb += raytrace(x - 11. / 32., y -  7. / 32., depthHolder);	// ++#+++++ ++++++++
-					depthIncrease(depth, depthHolder, hitNumber);
-					rgb += raytrace(x -  3. / 32., y -  5. / 32., depthHolder);	// ++++++#+ ++++++++
-					depthIncrease(depth, depthHolder, hitNumber);
-					rgb += raytrace(x +  5. / 32., y -  3. / 32., depthHolder);	// ++++++++ ++#+++++
-					depthIncrease(depth, depthHolder, hitNumber);
-					rgb += raytrace(x + 13. / 32., y -  1. / 32., depthHolder);	// ++++++++ ++++++#+
-					depthIncrease(depth, depthHolder, hitNumber);
-
-					rgb += raytrace(x - 13. / 32., y +  1. / 32., depthHolder);	// +#++++++ ++++++++
-					depthIncrease(depth, depthHolder, hitNumber);
-					rgb += raytrace(x -  5. / 32., y +  3. / 32., depthHolder);	// +++++#++ ++++++++
-					depthIncrease(depth, depthHolder, hitNumber);
-					rgb += raytrace(x +  3. / 32., y +  5. / 32., depthHolder);	// ++++++++ +#++++++
-					depthIncrease(depth, depthHolder, hitNumber);
-					rgb += raytrace(x + 11. / 32., y +  7. / 32., depthHolder);	// ++++++++ +++++#++
-					depthIncrease(depth, depthHolder, hitNumber);
-					rgb += raytrace(x - 15. / 32., y +  9. / 32., depthHolder);	// #+++++++ ++++++++
-					depthIncrease(depth, depthHolder, hitNumber);
-					rgb += raytrace(x -  7. / 32., y + 11. / 32., depthHolder);	// ++++#+++ ++++++++
-					depthIncrease(depth, depthHolder, hitNumber);
-					rgb += raytrace(x +  1. / 32., y + 13. / 32., depthHolder);	// ++++++++ #+++++++
-					depthIncrease(depth, depthHolder, hitNumber);
-					rgb += raytrace(x +  9. / 32., y + 15. / 32., depthHolder);	// ++++++++ ++++#+++
-					depthIncrease(depth, depthHolder, hitNumber);
-					rgb /= 16.;
-					if (hitNumber > 0)
-						depth /= hitNumber;
-					else
-						depth = std::numeric_limits<float>::max();
-					break;
-				}
-			}
-
+			Vec3Df rgb = raytraceMSAA(x, y, depth);
 			//store the result in an image 
 			result.setPixel(x, y, RGBValue(rgb[0], rgb[1], rgb[2]), depth);
 			++pixelsdone[threadID];
@@ -446,6 +431,78 @@ void RayTracer::threadmethod(int threadID)
 	}
 	printf("   %d done", threadID + 1);
 }
+
+Vec3Df RayTracer::raytraceMSAA(int x, int y, float &depth) {
+
+	int hitNumber = 0;
+	float depthHolder;
+	Vec3Df rgb = raytrace(x, y, depth);
+	depth = 0;
+
+	if (rgb != backgroundColor) {
+		// MSAA is done using a rotated (square) grid,
+		// and can therefore only be 4x or 16x.
+		switch (MSAA) {
+		case 4:
+			rgb = raytrace(x - 1. / 8., y - 3. / 8., depthHolder);	// +#++
+			depthIncrease(depth, depthHolder, hitNumber);
+			rgb += raytrace(x + 3. / 8., y - 1. / 8., depthHolder);	// +++#
+			depthIncrease(depth, depthHolder, hitNumber);
+			rgb += raytrace(x - 3. / 8., y + 1. / 8., depthHolder);	// #+++
+			depthIncrease(depth, depthHolder, hitNumber);
+			rgb += raytrace(x + 1. / 8., y + 3. / 8., depthHolder);	// ++#+
+			depthIncrease(depth, depthHolder, hitNumber);
+			rgb /= 4;
+			if (hitNumber > 0)
+				depth /= hitNumber;
+			else
+				depth = std::numeric_limits<float>::max();
+			break;
+		case 16:
+			rgb = raytrace(x - 9. / 32., y - 15. / 32., depthHolder);	// +++#++++ ++++++++
+			depthIncrease(depth, depthHolder, hitNumber);
+			rgb += raytrace(x - 1. / 32., y - 13. / 32., depthHolder);	// +++++++# ++++++++
+			depthIncrease(depth, depthHolder, hitNumber);
+			rgb += raytrace(x + 7. / 32., y - 11. / 32., depthHolder);	// ++++++++ +++#++++
+			depthIncrease(depth, depthHolder, hitNumber);
+			rgb += raytrace(x + 15. / 32., y - 9. / 32., depthHolder);	// ++++++++ +++++++#
+			depthIncrease(depth, depthHolder, hitNumber);
+			rgb += raytrace(x - 11. / 32., y - 7. / 32., depthHolder);	// ++#+++++ ++++++++
+			depthIncrease(depth, depthHolder, hitNumber);
+			rgb += raytrace(x - 3. / 32., y - 5. / 32., depthHolder);	// ++++++#+ ++++++++
+			depthIncrease(depth, depthHolder, hitNumber);
+			rgb += raytrace(x + 5. / 32., y - 3. / 32., depthHolder);	// ++++++++ ++#+++++
+			depthIncrease(depth, depthHolder, hitNumber);
+			rgb += raytrace(x + 13. / 32., y - 1. / 32., depthHolder);	// ++++++++ ++++++#+
+			depthIncrease(depth, depthHolder, hitNumber);
+
+			rgb += raytrace(x - 13. / 32., y + 1. / 32., depthHolder);	// +#++++++ ++++++++
+			depthIncrease(depth, depthHolder, hitNumber);
+			rgb += raytrace(x - 5. / 32., y + 3. / 32., depthHolder);	// +++++#++ ++++++++
+			depthIncrease(depth, depthHolder, hitNumber);
+			rgb += raytrace(x + 3. / 32., y + 5. / 32., depthHolder);	// ++++++++ +#++++++
+			depthIncrease(depth, depthHolder, hitNumber);
+			rgb += raytrace(x + 11. / 32., y + 7. / 32., depthHolder);	// ++++++++ +++++#++
+			depthIncrease(depth, depthHolder, hitNumber);
+			rgb += raytrace(x - 15. / 32., y + 9. / 32., depthHolder);	// #+++++++ ++++++++
+			depthIncrease(depth, depthHolder, hitNumber);
+			rgb += raytrace(x - 7. / 32., y + 11. / 32., depthHolder);	// ++++#+++ ++++++++
+			depthIncrease(depth, depthHolder, hitNumber);
+			rgb += raytrace(x + 1. / 32., y + 13. / 32., depthHolder);	// ++++++++ #+++++++
+			depthIncrease(depth, depthHolder, hitNumber);
+			rgb += raytrace(x + 9. / 32., y + 15. / 32., depthHolder);	// ++++++++ ++++#+++
+			depthIncrease(depth, depthHolder, hitNumber);
+			rgb /= 16.;
+			if (hitNumber > 0)
+				depth /= hitNumber;
+			else
+				depth = std::numeric_limits<float>::max();
+			break;
+		}
+	}
+	return rgb;
+}
+
 //perform the raytracing for one x/y position
 Vec3Df RayTracer::raytrace(double x, double y, float &depth)
 {
@@ -461,7 +518,7 @@ Vec3Df RayTracer::raytrace(double x, double y, float &depth)
 		(1 - yscale)*(xscale*dest01 + (1 - xscale)*dest11);
 
 	//launch raytracing for the given ray.
-	return performRayTracing(origin, dest, 0, depth);
+	return performRayTracing(origin, dest, 0, 1.0f, depth);
 }
 
 //transform the x, y position on the screen into the corresponding 3D world position
