@@ -101,10 +101,15 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k, floa
 		if (angle > 0)
 			resCol += hit.material.Kd()*angle * diffusePower; // / distanceToLight;
 
+		float dot = Vec3Df::dotProduct(lightDir, interpolatedNormal);
 		// Self Shadows (Dark side of object
-		if (Vec3Df::dotProduct(lightDir, interpolatedNormal) <= 0.2f) {
+		if (dot <= 0.f) {
 			resCol -= shadowRGB;
-		} else {
+		} 
+		else if (dot > 0.f & dot < 0.3f) {
+			resCol -= ((10.f/3.f) * abs(dot - 0.3f)) * shadowRGB;
+		} 
+		else {
 			// Specular lighting
 			halfwayVector = (lightDir + viewDir);
 			halfwayVector.normalize();
