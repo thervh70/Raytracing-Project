@@ -226,6 +226,8 @@ void reshape(int w, int h)
 void keyboard(unsigned char key, int x, int y)
 {
 	double times = 0;
+	int lights = 0;
+	float invalue = 0;
     printf("key %d '%c' pressed at %d,%d\n", key, key, x, y);
     fflush(stdout);
     switch (key)
@@ -251,6 +253,47 @@ void keyboard(unsigned char key, int x, int y)
 		}
 		printf("\nAverage RayTracing time: %f", times);
 		break;
+
+
+	case 's':
+		FILE* file;
+		file = fopen("camera.sav", "wb");
+		for (int i = 0; i < 16; ++i)
+			fprintf(file, "%f ", tb_matrix[i]);
+		fprintf(file, "\r\n%d\r\n", MyLightPositions.size());
+		for (int i = 0; i < MyLightPositions.size(); ++i)
+			fprintf(file, "%f %f %f\r\n", MyLightPositions[i][0], MyLightPositions[i][1], MyLightPositions[i][2]);
+		fclose(file);
+		printf("Camera and light positions saved\n\n");
+		break;
+	case 'S':
+		FILE* in;
+		in = fopen("camera.sav", "r");
+
+		for (int i = 0; i < 16; ++i) {
+			fscanf(in, "%f ", &invalue);
+			tb_matrix[i] = invalue;
+		}
+
+		fscanf(in, "\r\n%d\r\n", &lights);
+		MyLightPositions.clear();
+		MyLightPositions.reserve(lights);
+
+		for (int i = 0; i < lights; ++i) {
+			float inlight[3];
+			fscanf(in, "%f ", &invalue);
+			inlight[0] = invalue;
+			fscanf(in, "%f ", &invalue);
+			inlight[1] = invalue;
+			fscanf(in, "%f", &invalue);
+			inlight[2] = invalue;
+			fscanf(in, "\r\n");
+			MyLightPositions.push_back(Vec3Df(inlight));
+		}
+		fclose(in);
+		glutPostRedisplay();
+		break;
+
 	case 27:     // touche ESC
         exit(0);
     }

@@ -414,6 +414,7 @@ void yourDebugDraw()
 //    while to complete...
 void yourKeyboardFunc(char t, int x, int y, const Vec3Df & rayOrigin, const Vec3Df & rayDestination)
 {
+	int res;
 	AccelTreeNode test;
 	AccelTreeNode testNode;
 	Vec3Df position = Vec3Df(0.274594f, 1.89004f, 3.5032f), destination = Vec3Df(0.526746f,0.308055f,0.47311f);
@@ -461,7 +462,7 @@ void yourKeyboardFunc(char t, int x, int y, const Vec3Df & rayOrigin, const Vec3
 
 	case 'o':
 		std::cout << "Opening result.bmp";
-		int res = system("result.bmp");
+		res = system("result.bmp");
 		std::cout << " exited with code " << res << std::endl;
 		break;
 	}
