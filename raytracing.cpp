@@ -131,9 +131,9 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k, floa
 				for (float x = -1.f; x <= 1.f; x += delta)
 				for (float y = -1.f; y <= 1.f; y += delta)
 				for (float z = -1.f; z <= 1.f; z += delta) {
-					float rx = 0.f;//delta / 2.f * (double)rand() / (double)RAND_MAX - delta / 4.f;
-					float ry = 0.f;//delta / 2.f * (double)rand() / (double)RAND_MAX - delta / 4.f;
-					float rz = 0.f;//delta / 2.f * (double)rand() / (double)RAND_MAX - delta / 4.f;
+					float rx = delta / 2.f * (double)rand() / (double)RAND_MAX - delta / 4.f;
+					float ry = delta / 2.f * (double)rand() / (double)RAND_MAX - delta / 4.f;
+					float rz = delta / 2.f * (double)rand() / (double)RAND_MAX - delta / 4.f;
 					shadowHit = checkHit((hit.hitPoint + 0.5f * lightDir), v + Vec3Df((x + rx) * shadowRadius, (y + ry) * shadowRadius, (z + rz) * shadowRadius));
 					if (shadowHit.bHit) {
 						softShadow += 1.0f / shadowSamples / shadowSamples / shadowSamples;
