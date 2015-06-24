@@ -9,7 +9,7 @@ Ks 0.200000 0.200000 0.200000
 Ni 1.000000
 d 1.000000
 illum 2
-map_Kd C:\Users\Robin\AppData\Local\Temp\wz42c9\Space Marine Hero.png
+map_Kd textures\Space Marine Back.png
 
 newmtl Belt-Red
 Ns 149.019608
@@ -19,7 +19,7 @@ Ks 0.200000 0.200000 0.200000
 Ni 1.000000
 d 1.000000
 illum 2
-map_Kd C:\Users\Robin\AppData\Local\Temp\wz42c9\Space Marine Hero.png
+map_Kd textures\Space Marine Belt.png
 
 newmtl Black
 Ns 149.019608
@@ -78,7 +78,7 @@ Ks 0.200000 0.200000 0.200000
 Ni 1.000000
 d 1.000000
 illum 2
-map_Kd C:\Users\Robin\AppData\Local\Temp\wz42c9\Space Marine Hero.png
+map_Kd textures\Face Template.png
 
 newmtl Legs-_Red
 Ns 149.019608
@@ -88,7 +88,7 @@ Ks 0.200000 0.200000 0.200000
 Ni 1.000000
 d 1.000000
 illum 2
-map_Kd C:\Users\Robin\AppData\Local\Temp\wz42c9\Space Marine Hero.png
+map_Kd textures\Space Marine Legs.png
 
 newmtl Light
 Ns 90.196078
@@ -136,7 +136,7 @@ Ks 0.200000 0.200000 0.200000
 Ni 1.000000
 d 1.000000
 illum 2
-map_Kd C:\Users\Robin\AppData\Local\Temp\wz42c9\Space Marine Hero.png
+map_Kd textures\Space Marine Body.png
 
 newmtl Visor
 Ns 33.333333

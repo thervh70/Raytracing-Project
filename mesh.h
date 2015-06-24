@@ -5,7 +5,13 @@
 #include <vector>
 #include <map>
 #include <string>
+#pragma comment(lib, "corona.lib")
+#include "corona.h"
+#include "Vec3D.h"
 
+// define classes
+class Triangle;
+class Mesh;
 
 //Material class of the mesh
 //while colors seem useful, also texture names are loaded
@@ -43,6 +49,13 @@ class Material
             Tr_is_set_=m.Tr_is_set_; // transparency (use this value to trade off reflection/refraction
             illum_ = m.illum_;		
             name_=m.name_;
+
+			textureName_ = m.textureName_;
+			containsTexture = m.containsTexture;
+			texturePixels = m.texturePixels;
+			textureWidth = m.textureWidth;
+			textureHeight = m.textureHeight;
+
             return (*this);
         };
 
@@ -101,16 +114,29 @@ class Material
 		}
 
 		// load the textures
-/*		void loadTexture()
+		void loadTexture()
 		{
+			corona::Image* textureImage;
+//			const char* name = textureName_.c_str();
+			textureImage = corona::OpenImage(textureName_.c_str(), corona::PF_R8G8B8A8);
+			
+			if (!textureImage)
+			{
+				std::cout << "failed to read texture: " << textureName_ << std::endl;
+				return; // couldn't read image
+			}
 
+//			std::cout << "read texture: " << textureName_ <<  std::endl;
+
+			containsTexture = true;
+			texturePixels = textureImage->getPixels();
+			textureWidth = textureImage->getWidth();
+			textureHeight = textureImage->getHeight();
 		}
 
-		// get the texture at position
-		const Vec3Df& getTexture(const Vec3Df &position)
-		{
+		Vec3Df getTexture(const Mesh &MyMesh, const Triangle &t, const Vec3Df &hitpoint);
 
-		}*/
+		bool hasTexture() { return containsTexture; }
 
         const Vec3Df& Kd( void ) const { return Kd_; } //diffuse
         const Vec3Df& Ka( void ) const { return Ka_; } //ambiant
@@ -130,6 +156,16 @@ class Material
         }
         
     private:
+		
+		Vec3Df getTexture2(Vec3Df texCoords);
+
+		// pixels: first 8 bits: red, next 8 bits: green, ... 
+		// (red, green, blue, alpha)
+		void* texturePixels;
+
+		int textureWidth; // texture width
+		int textureHeight; // texture height
+		bool containsTexture = false; // if the material contains a texture
 
         Vec3Df Kd_;         bool Kd_is_set_; // diffuse
         Vec3Df Ka_;         bool Ka_is_set_; // ambient
