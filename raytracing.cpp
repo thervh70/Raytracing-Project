@@ -213,7 +213,7 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k, floa
 		float sin2ThetaTransmitted = pow(refractIndex, 2) * (1 - (pow(cosThetaIncidence, 2)));
 
 		// Important: only shoot the tRay if the angle is smaller than the critical angle.
-		if (sin2ThetaTransmitted <= 1) {
+		if (sin2ThetaTransmitted <= 1.f) {
 			// The result is a transmitted ray, by using formula 1.
 			const Vec3Df tRay = refractIndex * vIncidence + (refractIndex * cosThetaIncidence - sqrt(1 - sin2ThetaTransmitted)) * interpolatedNormal,
 				newOriginR = hit.hitPoint + 0.001f * tRay,
@@ -223,11 +223,10 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k, floa
 			if (debug)
 				testRay.push_back(TestRay(hit.hitPoint, Vec3Df(), Vec3Df()));
 
-			Vec3Df newCol = performRayTracing(newOriginR, newDestR, ++k, n2);
-			resCol = 0.3*resCol + 0.7*newCol;
 
-			if (debug)
-				testRay[k].color = newCol;
+			Vec3Df newCol = performRayTracing(newOriginR, newDestR, ++k, n2);
+			
+			resCol = 0.1*resCol + 0.9*newCol;
 
 		}
 		else {
