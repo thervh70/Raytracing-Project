@@ -366,7 +366,7 @@ void yourDebugDraw()
 	//this function is called every frame
 
 	//let's draw the mesh
-	MyMesh.draw();
+	MyMesh.drawSmooth();
 	
 	//let's draw the lights in the scene as points
 	glPushAttrib(GL_ALL_ATTRIB_BITS); //store all GL attributes
