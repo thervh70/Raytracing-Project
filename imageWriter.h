@@ -130,16 +130,18 @@ public:
 			if (_depth[i] != std::numeric_limits<float>::max())
 				_depth[i] = std::abs(_depth[i] - focusDepth) / denom;
 			else
-				_depth[i] = 1;
+				_depth[i] = 0;
 		}
 	}
 
-	std::vector<std::vector<float>> gauseanMap(float intesisty) {
+	std::vector<std::vector<float>> gauseanMap(float intensity) {
+		intensity = 1 - intensity;
+		intensity *= intensity;
 		float total = 0.;
 		std::vector<std::vector<float>> map;
 		map.resize(13);
 
-		if (intesisty >= 1) {
+		if (intensity >= 1) {
 			for (int i = 0; i < 13; i++) {
 				std::vector<float> row;
 				row.resize(13);
@@ -159,10 +161,10 @@ public:
 
 			for (int j = 0; j < 13; j++) {
 				row[j] = 
-					1 / (intesisty * depthPower * 2 * M_PI)*
+					1 / (intensity * depthPower * 2 * M_PI)*
 					std::powf(
 						M_E, 
-						( -(i - 6)*(i - 6) -(j - 6)*(j - 6) ) / 2 * std::powf(intesisty * depthPower, 2)
+						( -(i - 6)*(i - 6) -(j - 6)*(j - 6) ) / 2 * std::powf(intensity * depthPower, 2)
 					);
 				total += row[j];
 			}
