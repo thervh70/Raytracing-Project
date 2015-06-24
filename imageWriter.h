@@ -12,6 +12,8 @@
 # define M_PI           3.14159265358979323846  /* pi */
 # define M_E            2.71828182845904523536  /* e  */
 
+extern float focusDepth;
+
 //Image class 
 //This class can be used to write your final result to an image. 
 //You can open the image using a PPM viewer.
