@@ -1,4 +1,4 @@
-# Blender MTL File: 'final.blend'
+# Blender MTL File: 'final2.blend'
 # Material Count: 7
 
 newmtl Blue_Mirror_Ball
@@ -25,7 +25,7 @@ Ns 96.078431
 Ka 0.000000 0.000000 0.000000
 Kd 0.800000 0.800000 0.800000
 Ks 0.500000 0.500000 0.500000
-Ni 1.517000
+Ni 1.0000
 d 1.000000
 illum 2
 
@@ -36,7 +36,7 @@ Kd 0.000000 1.000000 0.000000
 Ks 1.000000 1.000000 1.000000
 Ni 1.000000
 d 1.000000
-illum 2
+illum 3
 
 newmtl White_Mirror_Wall
 Ns 96.078431
