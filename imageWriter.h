@@ -82,6 +82,8 @@ class Image
 public:
 	Image(void) {
 		setSize(WindowSize_X, WindowSize_Y);
+		int rowsize = floor((24 * _width + 31) / 32) * 4;
+		imageC.resize(rowsize * _height);
 	}
 	Image(int width, int height)
 	: _width(width)
@@ -89,6 +91,9 @@ public:
 	{
 		_image.resize(3 * _width*_height);
 		_depth.resize(_width*_height);
+
+		int rowsize = floor((24 * _width + 31) / 32) * 4;
+		imageC.resize(rowsize * _height);
 	}
 	void setPixel(int i, int j, const RGBValue & rgb, float depth)
 	{
@@ -200,10 +205,10 @@ public:
 	}
 
 	void blurrLine(int y) {
-		if (y < 6 || y >= (_height - 6)) return;
+		if (y < 6 || y >= (_height-6)) return;
 		std::vector<std::vector<float>> map;
 		float r, g, b;
-		for (int i = 6; i < (_width - 6); i++) {
+		for (int i = 6; i < (_width-6); i++) {
 
 			r = g = b = 0.0f;
 			map = gauseanMap(_depth[y*_width + i]);
@@ -216,9 +221,9 @@ public:
 				}
 			}
 
-			_blurr[3 * (y*blurrWidth() + i) ] = r;
-			_blurr[3 * (y*blurrWidth() + i) + 1] = g;
-			_blurr[3 * (y*blurrWidth() + i) + 2] = b;
+			_blurr[3 * ((y - 6)*blurrWidth() + i - 6) ] = r;
+			_blurr[3 * ((y - 6)*blurrWidth() + i - 6) + 1] = g;
+			_blurr[3 * ((y - 6)*blurrWidth() + i - 6) + 2] = b;
 		}
 	}
 
@@ -228,6 +233,7 @@ public:
 		}
 	}
 
+	std::vector<unsigned char> imageC;
 	std::vector<float> _image;
 	std::vector<float> _depth;
 	std::vector<float> _blurr;
@@ -305,7 +311,6 @@ bool Image::writeImageBMP(const char * filename)
 
 	// Print raw pixel data
 	int rowsize = floor((24 * _width + 31) / 32) * 4;
-	std::vector<unsigned char> imageC(rowsize * _height);
 
 	for (unsigned int y = 0; y < _height; ++y) {
 		unsigned int i = 0;
@@ -367,7 +372,6 @@ bool Image::writeDepthBMP(const char * filename)
 
 	// Print raw pixel data
 	int rowsize = floor((24 * _width + 31) / 32) * 4;
-	std::vector<unsigned char> imageC(rowsize * _height);
 
 	for (unsigned int y = 0; y < _height; ++y) {
 		unsigned int i = 0;
@@ -437,7 +441,6 @@ bool Image::writeBlurredBMP(const char * filename)
 
 	// Print raw pixel data
 	int rowsize = floor((24 * blurrWidth() + 31) / 32) * 4;
-	std::vector<unsigned char> imageC(rowsize * blurrHeight());
 
 	for (unsigned int y = 0; y < blurrHeight(); ++y) {
 		unsigned int i = 0;
