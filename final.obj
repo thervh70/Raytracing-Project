@@ -1,6 +1,6 @@
 # Blender v2.74 (sub 0) OBJ File: 'final.blend'
 # www.blender.org
-mtllib final5.mtl
+mtllib final.mtl
 o Plane.001
 v -4.606863 6.351674 -0.113692
 v 4.614248 6.351674 -0.113692
