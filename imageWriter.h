@@ -129,14 +129,14 @@ public:
 	std::vector<std::vector<float>> gauseanMap(float intesisty) {
 		float total = 0.;
 		std::vector<std::vector<float>> map;
-		map.resize(12);
+		map.resize(13);
 
 		if (intesisty >= 1) {
-			for (int i = 0; i < 12; i++) {
+			for (int i = 0; i < 13; i++) {
 				std::vector<float> row;
-				row.resize(12);
+				row.resize(13);
 
-				for (int j = 0; j < 12; j++) {
+				for (int j = 0; j < 13; j++) {
 					row[j] = 0.0f;
 				}
 				map[i] = row;
@@ -145,11 +145,11 @@ public:
 			return map;
 		}
 
-		for (int i = 0; i < 12; i++) {
+		for (int i = 0; i < 13; i++) {
 			std::vector<float> row;
-			row.resize(12);
+			row.resize(13);
 
-			for (int j = 0; j < 12; j++) {
+			for (int j = 0; j < 13; j++) {
 				row[j] = 
 					1 / (intesisty * depthPower * 2 * M_PI)*
 					std::powf(
@@ -161,8 +161,8 @@ public:
 			map[i] = row;
 		}
 
-		for (int i = 0; i < 12; i++) {
-			for (int j = 0; j < 12; j++) {
+		for (int i = 0; i < 13; i++) {
+			for (int j = 0; j < 13; j++) {
 				map[i][j] /= total;
 			}
 		}
@@ -174,10 +174,10 @@ public:
 		std::vector<std::vector<float>> map = gauseanMap(intens);
 
 		std::cout << "MAP FOR SIGMA = " << intens << std::endl;
-		for (int i = 0; i < 12; i++) {
+		for (int i = 0; i < 13; i++) {
 
 			std::cout << "[ ";
-			for (int j = 0; j < 12; j++) {
+			for (int j = 0; j < 13; j++) {
 				std::cout << map[i][j] << ", \t";
 			}
 			std::cout << " ]" << std::endl;
@@ -206,8 +206,8 @@ public:
 			r = g = b = 0.0f;
 			map = gauseanMap(_depth[y*_width + i]);
 
-			for (int j = 0; j < 12; j++) {
-				for (int k = 0; k < 12; k++) {
+			for (int j = 0; j < 13; j++) {
+				for (int k = 0; k < 13; k++) {
 					r += _image[3 * ((y + j - 6)*_width + i + k - 6)] * map[j][k];
 					g += _image[3 * ((y + j - 6)*_width + i + k - 6)+1] * map[j][k];
 					b += _image[3 * ((y + j - 6)*_width + i + k - 6)+2] * map[j][k];
