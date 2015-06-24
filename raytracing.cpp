@@ -439,6 +439,7 @@ void yourDebugDraw()
 void yourKeyboardFunc(char t, int x, int y, const Vec3Df & rayOrigin, const Vec3Df & rayDestination)
 {
 	int res;
+	float fres;
 	AccelTreeNode test;
 	AccelTreeNode testNode;
 	Vec3Df position = Vec3Df(0.274594f, 1.89004f, 3.5032f), destination = Vec3Df(0.526746f,0.308055f,0.47311f);
@@ -459,7 +460,7 @@ void yourKeyboardFunc(char t, int x, int y, const Vec3Df & rayOrigin, const Vec3
 		testRay[0].destination = rayDestination;
 
 		// make the ray the color of the intersection point (and slightly brighter)
-		testRay[0].color = performRayTracing(testRay[0].origin, testRay[0].destination, 0, 0.0f, focusDepth);
+		testRay[0].color = performRayTracing(testRay[0].origin, testRay[0].destination, 0, 0.0f, fres);
 
 		std::cout << "DEBUG RAY TRACE" << std::endl;
 
@@ -472,10 +473,15 @@ void yourKeyboardFunc(char t, int x, int y, const Vec3Df & rayOrigin, const Vec3
 			std::cout << "Origin        " << r.origin << std::endl;
 			std::cout << "Destination   " << r.destination << std::endl;
 			std::cout << "Color         " << r.color << std::endl;
-			std::cout << "(Focus)-Depth " << focusDepth << std::endl << std::endl;
+			std::cout << "Depth         " << fres << std::endl << std::endl;
 		}
 		
 		debug = false;
+		break;
+
+	case 'f':
+		performRayTracing(rayOrigin, rayDestination, 0, 0.0f, focusDepth);
+		printf("Focus depth set to %f\n", focusDepth);
 		break;
 
 	case 'c':
