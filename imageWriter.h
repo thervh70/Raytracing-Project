@@ -12,10 +12,8 @@
 # define M_PI           3.14159265358979323846  /* pi */
 # define M_E            2.71828182845904523536  /* e  */
 
-<<<<<<< HEAD
-=======
 extern float focusDepth;
->>>>>>> b872171... Make focusDepth available in imageWriter.h as extern var
+
 
 //Image class 
 //This class can be used to write your final result to an image. 
@@ -85,6 +83,8 @@ class Image
 public:
 	Image(void) {
 		setSize(WindowSize_X, WindowSize_Y);
+		int rowsize = floor((24 * _width + 31) / 32) * 4;
+		imageC.resize(rowsize * _height);
 	}
 	Image(int width, int height)
 	: _width(width)
@@ -92,6 +92,9 @@ public:
 	{
 		_image.resize(3 * _width*_height);
 		_depth.resize(_width*_height);
+
+		int rowsize = floor((24 * _width + 31) / 32) * 4;
+		imageC.resize(rowsize * _height);
 	}
 	void setPixel(int i, int j, const RGBValue & rgb, float depth)
 	{
@@ -134,14 +137,14 @@ public:
 	std::vector<std::vector<float>> gauseanMap(float intesisty) {
 		float total = 0.;
 		std::vector<std::vector<float>> map;
-		map.resize(12);
+		map.resize(13);
 
 		if (intesisty >= 1) {
-			for (int i = 0; i < 12; i++) {
+			for (int i = 0; i < 13; i++) {
 				std::vector<float> row;
-				row.resize(12);
+				row.resize(13);
 
-				for (int j = 0; j < 12; j++) {
+				for (int j = 0; j < 13; j++) {
 					row[j] = 0.0f;
 				}
 				map[i] = row;
@@ -150,11 +153,11 @@ public:
 			return map;
 		}
 
-		for (int i = 0; i < 12; i++) {
+		for (int i = 0; i < 13; i++) {
 			std::vector<float> row;
-			row.resize(12);
+			row.resize(13);
 
-			for (int j = 0; j < 12; j++) {
+			for (int j = 0; j < 13; j++) {
 				row[j] = 
 					1 / (intesisty * depthPower * 2 * M_PI)*
 					std::powf(
@@ -166,8 +169,8 @@ public:
 			map[i] = row;
 		}
 
-		for (int i = 0; i < 12; i++) {
-			for (int j = 0; j < 12; j++) {
+		for (int i = 0; i < 13; i++) {
+			for (int j = 0; j < 13; j++) {
 				map[i][j] /= total;
 			}
 		}
@@ -179,10 +182,10 @@ public:
 		std::vector<std::vector<float>> map = gauseanMap(intens);
 
 		std::cout << "MAP FOR SIGMA = " << intens << std::endl;
-		for (int i = 0; i < 12; i++) {
+		for (int i = 0; i < 13; i++) {
 
 			std::cout << "[ ";
-			for (int j = 0; j < 12; j++) {
+			for (int j = 0; j < 13; j++) {
 				std::cout << map[i][j] << ", \t";
 			}
 			std::cout << " ]" << std::endl;
@@ -190,30 +193,38 @@ public:
 		std::cout << "_______________________" << std::endl << std::endl;
 	}
 
+	int blurrWidth() {
+		return _width - 12;
+	}
+
+	int blurrHeight() {
+		return _height - 12;
+	}
+
 	void initBlurrMap() {
-		_blurr.resize(_image.size());
+		_blurr.resize(3* blurrWidth() * blurrHeight());
 	}
 
 	void blurrLine(int y) {
-		if (y < 6 || y >= (_height - 6)) return;
+		if (y < 6 || y >= (_height-6)) return;
 		std::vector<std::vector<float>> map;
 		float r, g, b;
-		for (int i = 6; i < (_width - 6); i++) {
+		for (int i = 6; i < (_width-6); i++) {
 
 			r = g = b = 0.0f;
 			map = gauseanMap(_depth[y*_width + i]);
 
-			for (int j = 0; j < 12; j++) {
-				for (int k = 0; k < 12; k++) {
+			for (int j = 0; j < 13; j++) {
+				for (int k = 0; k < 13; k++) {
 					r += _image[3 * ((y + j - 6)*_width + i + k - 6)] * map[j][k];
 					g += _image[3 * ((y + j - 6)*_width + i + k - 6)+1] * map[j][k];
 					b += _image[3 * ((y + j - 6)*_width + i + k - 6)+2] * map[j][k];
 				}
 			}
 
-			_blurr[3 * (y*_width + i) ] = r;
-			_blurr[3 * (y*_width + i) + 1] = g;
-			_blurr[3 * (y*_width + i) + 2] = b;
+			_blurr[3 * ((y - 6)*blurrWidth() + i - 6) ] = r;
+			_blurr[3 * ((y - 6)*blurrWidth() + i - 6) + 1] = g;
+			_blurr[3 * ((y - 6)*blurrWidth() + i - 6) + 2] = b;
 		}
 	}
 
@@ -223,6 +234,7 @@ public:
 		}
 	}
 
+	std::vector<unsigned char> imageC;
 	std::vector<float> _image;
 	std::vector<float> _depth;
 	std::vector<float> _blurr;
@@ -300,7 +312,6 @@ bool Image::writeImageBMP(const char * filename)
 
 	// Print raw pixel data
 	int rowsize = floor((24 * _width + 31) / 32) * 4;
-	std::vector<unsigned char> imageC(rowsize * _height);
 
 	for (unsigned int y = 0; y < _height; ++y) {
 		unsigned int i = 0;
@@ -362,7 +373,6 @@ bool Image::writeDepthBMP(const char * filename)
 
 	// Print raw pixel data
 	int rowsize = floor((24 * _width + 31) / 32) * 4;
-	std::vector<unsigned char> imageC(rowsize * _height);
 
 	for (unsigned int y = 0; y < _height; ++y) {
 		unsigned int i = 0;
@@ -410,41 +420,43 @@ bool Image::writeBlurredBMP(const char * filename)
 	unsigned char bmpinfoheader[40] = { 40,0,0,0, 0,0,0,0, 0,0,0,0, 1,0, 24,0 };
 	unsigned char bmppad[3] = { 0,0,0 };
 
-	bmpfileheader[2] = (unsigned char)(_image.size());
-	bmpfileheader[3] = (unsigned char)(_image.size() >> 8);
-	bmpfileheader[4] = (unsigned char)(_image.size() >> 16);
-	bmpfileheader[5] = (unsigned char)(_image.size() >> 24);
 
-	bmpinfoheader[4] = (unsigned char)(_width);
-	bmpinfoheader[5] = (unsigned char)(_width >> 8);
-	bmpinfoheader[6] = (unsigned char)(_width >> 16);
-	bmpinfoheader[7] = (unsigned char)(_width >> 24);
-	bmpinfoheader[8] = (unsigned char)(-_height);			// Minus height, because standard BMP renders bottom-to-top
-	bmpinfoheader[9] = (unsigned char)((-_height) >> 8);
-	bmpinfoheader[10] = (unsigned char)((-_height) >> 16);
-	bmpinfoheader[11] = (unsigned char)((-_height) >> 24);
+	int s = blurrWidth() * blurrHeight();
+	bmpfileheader[2] = (unsigned char)(s);
+	bmpfileheader[3] = (unsigned char)(s >> 8);
+	bmpfileheader[4] = (unsigned char)(s >> 16);
+	bmpfileheader[5] = (unsigned char)(s >> 24);
+
+	bmpinfoheader[4] = (unsigned char)(blurrWidth());
+	bmpinfoheader[5] = (unsigned char)(blurrWidth() >> 8);
+	bmpinfoheader[6] = (unsigned char)(blurrWidth() >> 16);
+	bmpinfoheader[7] = (unsigned char)(blurrWidth() >> 24);
+
+	bmpinfoheader[8] = (unsigned char)(-blurrHeight());			// Minus height, because standard BMP renders bottom-to-top
+	bmpinfoheader[9] = (unsigned char)(-blurrHeight() >> 8);
+	bmpinfoheader[10] = (unsigned char)(-blurrHeight() >> 16);
+	bmpinfoheader[11] = (unsigned char)(-blurrHeight() >> 24);
 
 	fwrite(bmpfileheader, 1, 14, file);
 	fwrite(bmpinfoheader, 1, 40, file);
 
 	// Print raw pixel data
-	int rowsize = floor((24 * _width + 31) / 32) * 4;
-	std::vector<unsigned char> imageC(rowsize * _height);
+	int rowsize = floor((24 * blurrWidth() + 31) / 32) * 4;
 
-	for (unsigned int y = 6; y < _height - 6; ++y) {
-		unsigned int i = 6;
-		for (; i < (_width-6) * 3; i += 3) {
+	for (unsigned int y = 0; y < blurrHeight(); ++y) {
+		unsigned int i = 0;
+		for (; i < blurrWidth() * 3; i += 3) {
 			// RGB are flipped to BGR
-			imageC[(y - 6)*rowsize + i - 6] = (unsigned char)(_blurr[y*_width * 3 + i + 2] * 255.0f);
-			imageC[(y - 6)*rowsize + i - 5] = (unsigned char)(_blurr[y*_width * 3 + i + 1] * 255.0f);
-			imageC[(y - 6)*rowsize + i - 4] = (unsigned char)(_blurr[y*_width * 3 + i] * 255.0f);
+			imageC[y*rowsize + i ]     = (unsigned char)(_blurr[y*blurrWidth() * 3 + i + 2] * 255.0f);
+			imageC[y*rowsize + i + 1 ] = (unsigned char)(_blurr[y*blurrWidth() * 3 + i + 1] * 255.0f);
+			imageC[y*rowsize + i + 2 ] = (unsigned char)(_blurr[y*blurrWidth() * 3 + i] * 255.0f);
 		}
 		for (; i < rowsize; ++i) {
-			imageC[(y - 6)*rowsize + i] = (unsigned char)1;
+			imageC[y*rowsize + i - 3] = (unsigned char)1;
 		}
 	}
 
-	int t = fwrite(&(imageC[0]), _width * _height * 3, 1, file);
+	int t = fwrite(&(imageC[0]), s * 3, 1, file);
 	if (t != 1)
 	{
 		printf("Dump file problem... fwrite\n");

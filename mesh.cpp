@@ -93,9 +93,6 @@ void Mesh::draw() {
 	glEnd();
 }
 
-
-
-
 bool Mesh::loadMesh(const char * filename, bool randomizeTriangulation)
 {
 	vertices.clear();
