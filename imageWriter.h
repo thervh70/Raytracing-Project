@@ -116,13 +116,13 @@ public:
 	}
 
 	void normailzeDepthRange() {
-		float lowest, denom;
-		getDepthRange(lowest, denom);
-		denom -= lowest;
+		float lowest, highest, denom;
+		getDepthRange(lowest, highest);
+		denom = std::max(std::abs(lowest - focusDepth), std::abs(highest - focusDepth));
 
 		for (int i = 0; i < _depth.size(); i++) {
 			if (_depth[i] != std::numeric_limits<float>::max())
-				_depth[i] = (_depth[i] - lowest) / denom;
+				_depth[i] = std::abs(_depth[i] - focusDepth) / denom;
 			else
 				_depth[i] = 1;
 		}
