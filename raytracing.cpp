@@ -84,6 +84,9 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k, floa
 	Vec3Df interpolatedNormal = normalA*u + normalB*v + normalC*w;
 	interpolatedNormal.normalize();
 
+	// TO_ROBIN: Flat shading enable this line
+	//interpolatedNormal = hit.triangle.normal;
+
 	// default lighting in all parts that even are in shadow everywhere.
 	// Maarten - This should be Ka, ambient light, but our .mtl files have Ka = (0,0,0).
 	if (!hit.material.hasTexture())
@@ -130,6 +133,8 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k, floa
 			halfwayVector = (lightDir + viewDir);
 			halfwayVector.normalize();
 			angle = Vec3Df::dotProduct(interpolatedNormal, halfwayVector);
+
+			// TO_ROBIN: Disable the next two lines to disable specular highlighting.
 			if (angle > 0.f)
 				resCol += hit.material.Ks()*std::pow(angle, specularHighlight);
 
@@ -366,7 +371,7 @@ void yourDebugDraw()
 	//this function is called every frame
 
 	//let's draw the mesh
-	MyMesh.draw();
+	MyMesh.drawSmooth();
 	
 	//let's draw the lights in the scene as points
 	glPushAttrib(GL_ALL_ATTRIB_BITS); //store all GL attributes
