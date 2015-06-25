@@ -116,7 +116,6 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k, floa
 		if (angle > 0)
 			resCol += hit.material.Kd()*angle * diffusePower; // / distanceToLight;
 
-															  // Self Shadows (Dark side of object
 		angle = Vec3Df::dotProduct(lightDir, interpolatedNormal);
 		// Self Shadows (Dark side of object)
 		if (angle <= 0.2f) {
@@ -493,6 +492,12 @@ void yourKeyboardFunc(char t, int x, int y, const Vec3Df & rayOrigin, const Vec3
 	case 'o':
 		std::cout << "Opening result.bmp";
 		res = system("result.bmp");
+		std::cout << " exited with code " << res << std::endl;
+		break;
+
+	case 'O':
+		std::cout << "Opening blurred.bmp";
+		res = system("blurred.bmp");
 		std::cout << " exited with code " << res << std::endl;
 		break;
 	}
