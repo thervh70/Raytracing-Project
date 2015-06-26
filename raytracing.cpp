@@ -69,7 +69,7 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k, floa
 	HitTriangle hit = checkHit(origin, dest, minT);
 
 	if (debug)
-		testRay[k].destination = hit.bHit ? hit.hitPoint : dest;
+		testRay[testRay.size()-1].destination = hit.bHit ? hit.hitPoint : dest;
 
 	if (!hit.bHit) return backgroundColor;
 
@@ -163,6 +163,10 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k, floa
 		resCol -= shadowMax * shadowRGB;
 	}
 
+	int newK = k + 1;
+	if (newK >= 5)
+		return resCol;
+
 	// These are the indices of refraction.
 	// n1 is the material from where the ray comes from, which is the Ni value of the previous hitPoint,
 	// if it has a Ni value, else float 1 (standard for air).
@@ -177,14 +181,19 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k, floa
 			newOrigin = hit.hitPoint + 0.001f * reflectdir,
 			newDest = hit.hitPoint + reflectdir;
 
-		if (debug)
-			testRay.push_back(TestRay(hit.hitPoint, Vec3Df(), Vec3Df()));
+		int s;
+		if (debug) {
+			testRay.push_back(TestRay(hit.hitPoint, Vec3Df(), Vec3Df(), 1, newK));
+			s = testRay.size() - 1;
+		}
 
-		Vec3Df newCol = performRayTracing(newOrigin, newDest, ++k, n2);
+		Vec3Df newCol = performRayTracing(newOrigin, newDest, newK, n2);
 		resCol = 0.5*resCol + 0.5*newCol;
 
 		if (debug)
-			testRay[k].color = newCol;
+			testRay[s].color = newCol;
+
+		return resCol;
 	}
 
 	// Normalized viewing vector, 
@@ -211,40 +220,54 @@ Vec3Df performRayTracing(const Vec3Df & origin, const Vec3Df & dest, int k, floa
 		// Sin^2(Theta) calculation, with theta as the angle of transmittance, by using formula 2.
 		float sin2ThetaTransmitted = pow(refractIndex, 2) * (1 - (pow(cosThetaIncidence, 2)));
 
+		Vec3Df newColT, newColR;
+
+		int s;
 		// Important: only shoot the tRay if the angle is smaller than the critical angle.
-		if (sin2ThetaTransmitted <= 1.f) {
+		if (sin2ThetaTransmitted <= 1.0f) {
 			// The result is a transmitted ray, by using formula 1.
 			const Vec3Df tRay = refractIndex * vIncidence + (refractIndex * cosThetaIncidence - sqrt(1 - sin2ThetaTransmitted)) * interpolatedNormal,
-				newOriginR = hit.hitPoint + 0.001f * tRay,
-				newDestR = hit.hitPoint + tRay;
+				newOriginT = hit.hitPoint + 0.001f * tRay,
+				newDestT = hit.hitPoint + tRay;
 
-			// Debug and Tracing		
+			// Debug and Tracing
+			if (debug) {
+				testRay.push_back(TestRay(hit.hitPoint, Vec3Df(), Vec3Df(), 2, newK));
+				s = testRay.size() - 1;
+			}
+
+			newColT = performRayTracing(newOriginT, newDestT, newK, n2);	
+			newColT = 0.1*resCol + 0.9*newColT;
+
 			if (debug)
-				testRay.push_back(TestRay(hit.hitPoint, Vec3Df(), Vec3Df()));
-
-
-			Vec3Df newCol = performRayTracing(newOriginR, newDestR, ++k, n2);
-			
-			resCol = 0.1*resCol + 0.9*newCol;
+				testRay[s].color = newColT;
 
 		}
-		else {
+//		else {
 			// The result is just a reflected ray.
 			const Vec3Df refRay = vIncidence - 2 * Vec3Df::dotProduct(vIncidence, interpolatedNormal) * interpolatedNormal,
 				newOriginR = hit.hitPoint + 0.001f * refRay,
 				newDestR = hit.hitPoint + refRay;
 
-			// Debug and Tracing		
+			// Debug and Tracing
+			if (debug) {
+				testRay.push_back(TestRay(hit.hitPoint, Vec3Df(), Vec3Df(), 3, newK));
+				s = testRay.size() - 1;
+			}
+
+			newColR = performRayTracing(newOriginR, newDestR, newK, n2);
+			newColR = 0.5*resCol + 0.5*newColR;
+
 			if (debug)
-				testRay.push_back(TestRay(hit.hitPoint, Vec3Df(), Vec3Df()));
+				testRay[s].color = newColR;
 
-			Vec3Df newCol = performRayTracing(newOriginR, newDestR, ++k, n2);
-			resCol = 0.5*resCol + 0.5*newCol;
-
-			if (debug)
-				testRay[k].color = newCol;
-
-		}
+//		}
+		float reflectFactor = sin2ThetaTransmitted;
+		reflectFactor = (reflectFactor < 0 ? 0 : reflectFactor);
+		reflectFactor = (reflectFactor > 1 ? 1 : reflectFactor);
+		resCol = reflectFactor * newColR + (1 - reflectFactor) * newColT;
+		if (debug)
+			printf("k = %d,   reflectFactor = %f\n", k, reflectFactor);
 	}
 
 	return resCol;
@@ -471,7 +494,8 @@ void yourKeyboardFunc(char t, int x, int y, const Vec3Df & rayOrigin, const Vec3
 			std::cout << "Origin        " << r.origin << std::endl;
 			std::cout << "Destination   " << r.destination << std::endl;
 			std::cout << "Color         " << r.color << std::endl;
-			std::cout << "Depth         " << fres << std::endl << std::endl;
+			std::cout << "Depth         " << fres << std::endl;
+			std::cout << "k = " << r.k << ",   type = " << r.type << std::endl << std::endl;
 		}
 		
 		debug = false;

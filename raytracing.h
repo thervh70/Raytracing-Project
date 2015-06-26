@@ -57,15 +57,20 @@ struct TestRay {
 	Vec3Df origin;
 	Vec3Df destination;
 	Vec3Df color;
+	int type;
+	int k;
 
 	TestRay()
-		: origin(Vec3Df()), destination(Vec3Df()), color(Vec3Df(1, 1, 1)) {};
+		: origin(Vec3Df()), destination(Vec3Df()), color(Vec3Df(1, 1, 1)), type(0), k(0) {};
 
 	TestRay(Vec3Df o, Vec3Df d)
-		: origin(o), destination(d), color(Vec3Df(1, 1, 1)) {};
+		: origin(o), destination(d), color(Vec3Df(1, 1, 1)), type(0), k(0) {};
 
 	TestRay(Vec3Df o, Vec3Df d, Vec3Df c)
-		: origin(o), destination(d), color(c) {};
+		: origin(o), destination(d), color(c), type(0), k(0) {};
+
+	TestRay(Vec3Df o, Vec3Df d, Vec3Df c, int t, int k)
+		: origin(o), destination(d), color(c), type(t), k(k) {};
 };
 
 HitTriangle checkHit(const Vec3Df & origin, const Vec3Df & dest);
