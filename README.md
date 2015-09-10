@@ -2,6 +2,8 @@
 
 ## Group 6
 
+![Final image for the competition](http://i.imgur.com/eQAUTMn.jpg)
+
 ### Features (chronologically ordered)
 
  - Diffuse light
