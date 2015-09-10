@@ -1,4 +1,4 @@
-# Bullet list of extra implemented features for the Raytracing-Project
+# TI1806 - Raytracing-Project
 
 ## Group 6
 
